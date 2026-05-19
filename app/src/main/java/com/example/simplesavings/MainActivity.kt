@@ -40,6 +40,7 @@ import androidx.compose.ui.zIndex
 import androidx.room.Database
 import androidx.room.Room
 import com.example.simplesavings.config.database.AppDatabase
+import com.example.simplesavings.model.category.Category
 import com.example.simplesavings.model.group.Group
 import com.example.simplesavings.ui.theme.SimpleSavingsTheme
 import kotlinx.coroutines.launch
@@ -84,7 +85,6 @@ fun Groupsd (modifier: Modifier = Modifier) {
     Column(modifier = modifier
         .padding(10.dp, 15.dp)
         .verticalScroll(rememberScrollState()) ) {
-        var categoryList = listOf(Category("Food"), Category("Sarah Shared Activities"))
 
         val groupList by db.groupDao().getAll().collectAsState(initial = emptyList())
 
@@ -115,17 +115,33 @@ fun Groupsd (modifier: Modifier = Modifier) {
                             .padding(16.dp),
                         textAlign = TextAlign.Center,
                     )
-                    Button (
-                        onClick = {
-                            scope.launch {
-                                db.groupDao().delete(group)
-                            }
-                        }
+                    Row (
+
                     ) {
-                        Text (
-                            text = "Del"
-                        )
+                        Button (
+                            onClick = {
+                                scope.launch {
+                                    db.categoryDao().insert(Category(0, "Test"))
+                                }
+                            }
+                        ) {
+                            Text (
+                                text = "Add Cat"
+                            )
+                        }
+                        Button (
+                            onClick = {
+                                scope.launch {
+                                    db.groupDao().delete(group)
+                                }
+                            }
+                        ) {
+                            Text (
+                                text = "Del"
+                            )
+                        }
                     }
+
                 }
             }
         }
@@ -139,7 +155,7 @@ fun CreateGroupCard(
     db: AppDatabase,
     onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
-    var groupName:MutableState<String> = mutableStateOf("")
+    var groupName: MutableState<String> = mutableStateOf("")
 
     Box(
         modifier = modifier.fillMaxSize().zIndex(100F),
@@ -151,35 +167,31 @@ fun CreateGroupCard(
             ),
             modifier = Modifier.height(200.dp).width(200.dp)
         ) {
-            TextField (
+            TextField(
                 value = groupName.value,
-                onValueChange = {groupName.value = it }
+                onValueChange = { groupName.value = it }
             )
             Button(
                 onClick = {
                     scope.launch {
-                        db.groupDao().insert(Group(0,  groupName.value))
+                        db.groupDao().insert(Group(0, groupName.value))
                     }
                 },
                 enabled = groupName.value != ""
             ) {
-                Text (
+                Text(
                     text = "Add Group"
                 )
             }
-            Button (
+            Button(
                 onClick = {
                     onDismiss()
                 }
             ) {
-                Text (
+                Text(
                     text = "Close"
                 )
             }
         }
     }
-}
-
-class Category(name: String = "") {
-    var name = name
 }
