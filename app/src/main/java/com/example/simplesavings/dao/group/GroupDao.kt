@@ -1,6 +1,7 @@
 package com.example.simplesavings.dao.group
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import com.example.simplesavings.model.group.Group
@@ -13,4 +14,7 @@ interface GroupDao {
 
     @Insert
     suspend fun insert(group: Group)
+
+    @Delete
+    suspend fun delete(group: Group)
 }

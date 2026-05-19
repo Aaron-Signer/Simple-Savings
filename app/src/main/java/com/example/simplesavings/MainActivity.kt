@@ -1,12 +1,15 @@
 package com.example.simplesavings
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,7 +21,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +71,7 @@ fun Groupsd (modifier: Modifier = Modifier) {
             .build()
     }
     var showCard by remember { mutableStateOf( false) }
+    val scope = rememberCoroutineScope()
 
     if (showCard) {
         CreateGroupCard(db = db)
@@ -109,14 +115,31 @@ fun Groupsd (modifier: Modifier = Modifier) {
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 6.dp
                 ),
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize().padding(bottom = 20.dp)
             ) {
-                Text(
-                    text = group.name,
-                    modifier = Modifier
-                        .padding(16.dp),
-                    textAlign = TextAlign.Center,
-                )
+                Row (
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = group.name,
+                        modifier = Modifier
+                            .padding(16.dp),
+                        textAlign = TextAlign.Center,
+                    )
+                    Button (
+                        onClick = {
+                            scope.launch {
+                                db.groupDao().delete(group)
+                            }
+                        }
+                    ) {
+                        Text (
+                            text = "Del"
+                        )
+                    }
+                }
+
 
 //                for (category in group.categoryList) {
 //                    ElevatedCard(
@@ -139,9 +162,11 @@ fun Groupsd (modifier: Modifier = Modifier) {
     }
 }
 
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun CreateGroupCard(modifier: Modifier = Modifier, db: AppDatabase) {
     val scope = rememberCoroutineScope()
+    var groupName:MutableState<String> = mutableStateOf("")
 
     Box(
         Modifier.fillMaxSize().zIndex(100F),
@@ -151,14 +176,19 @@ fun CreateGroupCard(modifier: Modifier = Modifier, db: AppDatabase) {
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 6.dp
             ),
-            modifier = Modifier.height(100.dp).width(100.dp)
+            modifier = Modifier.height(200.dp).width(200.dp)
         ) {
+            TextField (
+                value = groupName.value,
+                onValueChange = {groupName.value = it }
+            )
             Button(
                 onClick = {
                     scope.launch {
-                        db.groupDao().insert(Group(0,  "New Group"))
+                        db.groupDao().insert(Group(0,  groupName.value))
                     }
-                }
+                },
+                enabled = groupName.value != ""
             ) {
                 Text (
                     text = "Add Group"
