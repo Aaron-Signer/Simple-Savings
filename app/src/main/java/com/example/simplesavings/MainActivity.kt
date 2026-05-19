@@ -32,6 +32,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -74,7 +75,10 @@ fun Groupsd (modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
 
     if (showCard) {
-        CreateGroupCard(db = db)
+        CreateGroupCard(
+            Modifier,
+            db = db,
+            {showCard = false})
     }
 
     Column(modifier = modifier
@@ -82,26 +86,10 @@ fun Groupsd (modifier: Modifier = Modifier) {
         .verticalScroll(rememberScrollState()) ) {
         var categoryList = listOf(Category("Food"), Category("Sarah Shared Activities"))
 
-
-        var group1 = Group(1, "Test")
-        var groupList = listOf(group1)
-
-        val groupDao = db.groupDao()
-
-//        if (groupDao != null) {
-            val groupList2 by db.groupDao().getAll().collectAsState(initial = emptyList())
-
-//            var groupList2 = groupDao.getAll()
-//        }
-
-//        var groupList = categoryListFromDb
-
+        val groupList by db.groupDao().getAll().collectAsState(initial = emptyList())
 
         Button (
             onClick = {
-//                scope.launch {
-//                    db.groupDao().insert(Group(0,  "New Group"))
-//                }
                 showCard = true
             }
         ) {
@@ -110,7 +98,7 @@ fun Groupsd (modifier: Modifier = Modifier) {
             )
         }
 
-        for (group in groupList2) {
+        for (group in groupList) {
             ElevatedCard(
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 6.dp
@@ -139,24 +127,6 @@ fun Groupsd (modifier: Modifier = Modifier) {
                         )
                     }
                 }
-
-
-//                for (category in group.categoryList) {
-//                    ElevatedCard(
-//                        elevation = CardDefaults.cardElevation(
-//                            defaultElevation = 6.dp
-//                        ),
-//                        modifier = Modifier
-//                            .size(width = 240.dp, height = 100.dp)
-//                    ) {
-//                        Text(
-//                            text = category.name,
-//                            modifier = Modifier
-//                                .padding(16.dp),
-//                            textAlign = TextAlign.Center,
-//                        )
-//                    }
-//                }
             }
         }
     }
@@ -164,12 +134,15 @@ fun Groupsd (modifier: Modifier = Modifier) {
 
 @SuppressLint("UnrememberedMutableState")
 @Composable
-fun CreateGroupCard(modifier: Modifier = Modifier, db: AppDatabase) {
+fun CreateGroupCard(
+    modifier: Modifier = Modifier,
+    db: AppDatabase,
+    onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
     var groupName:MutableState<String> = mutableStateOf("")
 
     Box(
-        Modifier.fillMaxSize().zIndex(100F),
+        modifier = modifier.fillMaxSize().zIndex(100F),
         contentAlignment = Alignment.Center
     ) {
         ElevatedCard(
@@ -192,6 +165,15 @@ fun CreateGroupCard(modifier: Modifier = Modifier, db: AppDatabase) {
             ) {
                 Text (
                     text = "Add Group"
+                )
+            }
+            Button (
+                onClick = {
+                    onDismiss()
+                }
+            ) {
+                Text (
+                    text = "Close"
                 )
             }
         }
