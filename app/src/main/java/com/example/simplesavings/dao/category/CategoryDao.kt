@@ -20,7 +20,7 @@ interface CategoryDao {
     suspend fun delete(category: Category)
 
     @Query(
-        "select c.uid, c.name, c.groupUid from groups as g " +
+        "select c.uid, c.name, c.groupUid, c.planned, c.spent, c.spendingType from groups as g " +
                 "join category as c on g.uid = c.groupUid " +
                 "where g.uid = :groupUid"
     )

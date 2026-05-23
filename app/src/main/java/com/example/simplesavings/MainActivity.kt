@@ -2,15 +2,19 @@ package com.example.simplesavings
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Paint.Align
 import android.os.Bundle
+import android.widget.TableLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -19,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -33,9 +38,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.room.Database
 import androidx.room.Room
@@ -76,6 +84,20 @@ fun Groupsd (modifier: Modifier = Modifier) {
 
     val groupList by db.groupDao().getAll().collectAsState(initial = emptyList())
 
+    for (group in groupList) {
+        val categoryListForGroup by db.categoryDao().getCategoriesForGroup(group.uid).collectAsState(initial = emptyList())
+
+        var groupPlannedTotal = 0.0
+        var groupSpentTotal = 0.0
+
+        for (category in categoryListForGroup) {
+            groupPlannedTotal += category.planned
+        }
+
+        group.plannedTotal = groupPlannedTotal
+        group.spentTotal = groupSpentTotal
+    }
+
     var showCard by remember { mutableStateOf( false) }
     var showCreateCategoryForm by remember { mutableStateOf( false) }
     val scope = rememberCoroutineScope()
@@ -99,39 +121,31 @@ fun Groupsd (modifier: Modifier = Modifier) {
         .padding(10.dp, 15.dp)
         .verticalScroll(rememberScrollState()) ) {
 
-        Button (
-            onClick = {
-                showCard = true
-            }
-        ) {
-            Text (
-                text = "Click Me"
-            )
-        }
-
         for (group in groupList) {
             ElevatedCard (
                 elevation = CardDefaults.cardElevation (
                     defaultElevation = 6.dp
                 ),
-                modifier = Modifier.fillMaxSize().padding(bottom = 20.dp)
+                modifier = Modifier.fillMaxSize().padding(20.dp)
             ) {
                 Row (
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().padding(5.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text (
-                        text = group.name,
-                        modifier = Modifier
-                            .padding(16.dp),
-                        textAlign = TextAlign.Center,
-                    )
-                    Row () {
+                    Column (
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text (
+                            text = group.name
+                        )
+                    }
+
+                    Row (
+                        horizontalArrangement = Arrangement.End
+                    ) {
                         Button (
                             onClick = {
-                                scope.launch {
-                                    db.categoryDao().insert(Category(0, group.uid,"Test"))
-                                }
+                                showCreateCategoryForm = true
                             }
                         ) {
                             Text (
@@ -151,18 +165,95 @@ fun Groupsd (modifier: Modifier = Modifier) {
                         }
                     }
                 }
+                Row(
+                    Modifier.padding(5.dp).fillMaxWidth(),
+
+                    ) {
+                    Text (
+                        text = "",
+                        Modifier.weight(.4F)
+                    )
+                    Text (
+                        text = "$${group.plannedTotal.toString()}",
+                        Modifier.weight(.2F).padding(end = 5.dp),
+                        textAlign = TextAlign.End
+                    )
+                    Text (
+                        text = "$${group.spentTotal.toString()}",
+                        Modifier.weight(.2F).padding(end = 5.dp),
+                        textAlign = TextAlign.End
+                    )
+                    Text (
+                        text = "",
+                        Modifier.weight(.2F)
+                    )
+                }
+                HorizontalDivider(thickness = 1.dp)
+                Row (
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text (
+                        text = "Category",
+                        modifier = Modifier.weight(.4F),
+                    )
+                    Text (
+                        text = "Planned",
+                        Modifier.weight(.2F)
+                    )
+                    Text (
+                        text = "Spent",
+                        Modifier.weight(.2F)
+                    )
+                    Text (
+                        text = "Type",
+                        Modifier.weight(.2F)
+                    )
+                }
+                HorizontalDivider(thickness = 2.dp, color = Color.Cyan)
 
                 Column() {
 //                    val categoryList by db.categoryDao().getAll().collectAsState(initial = emptyList())
                     val categoryList by db.categoryDao().getCategoriesForGroup(group.uid).collectAsState(initial = emptyList())
                     for (category in categoryList) {
-                        Text (
-                            text = category.name
-                        )
+                        Row(
+                            Modifier.padding(5.dp).fillMaxWidth(),
+
+                        ) {
+                            Text (
+                                text = category.name,
+                                Modifier.weight(.4F),
+                            )
+                            Text (
+                                text = "$${category.planned.toString()}",
+                                Modifier.weight(.2F).padding(end = 5.dp),
+                                textAlign = TextAlign.End
+                            )
+                            Text (
+                                text = "$${category.spent.toString()}",
+                                Modifier.weight(.2F).padding(end = 5.dp),
+                                textAlign = TextAlign.End
+                            )
+                            Text (
+                                text = category.spendingType.toString(),
+                                Modifier.weight(.2F)
+                            )
+                        }
+                        HorizontalDivider(thickness = 1.dp)
+
                     }
                 }
 
             }
+        }
+        Button (
+            onClick = {
+                showCard = true
+            }
+        ) {
+            Text (
+                text = "Add Group"
+            )
         }
     }
 }

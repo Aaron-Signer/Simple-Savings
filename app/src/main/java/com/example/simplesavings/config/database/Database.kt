@@ -8,7 +8,7 @@ import com.example.simplesavings.model.category.Category
 import com.example.simplesavings.dao.group.GroupDao
 
 
-@Database(entities = [Group::class, Category::class], version = 4)
+@Database(entities = [Group::class, Category::class], version = 8)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun groupDao(): GroupDao
 
