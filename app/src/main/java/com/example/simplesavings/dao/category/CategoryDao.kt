@@ -18,4 +18,11 @@ interface CategoryDao {
 
     @Delete
     suspend fun delete(category: Category)
+
+    @Query(
+        "select c.uid, c.name, c.groupUid from groups as g " +
+                "join category as c on g.uid = c.groupUid " +
+                "where g.uid = :groupUid"
+    )
+    fun getCategoriesForGroup(groupUid: Int): Flow<List<Category>>
 }

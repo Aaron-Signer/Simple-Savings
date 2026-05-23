@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import com.example.simplesavings.model.category.Category
 import com.example.simplesavings.model.group.Group
 import kotlinx.coroutines.flow.Flow
 
@@ -17,4 +18,10 @@ interface GroupDao {
 
     @Delete
     suspend fun delete(group: Group)
+
+    @Query(
+        "SELECT * FROM groups " +
+                "JOIN category ON groups.uid = category.uid"
+    )
+    fun loadGroupsAndCategories(): Flow<Map<Group, List<Category>>>
 }

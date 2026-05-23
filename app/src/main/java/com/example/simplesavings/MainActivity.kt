@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.room.Database
 import androidx.room.Room
+import com.example.simplesavings.composable.CreateCategoryForm
 import com.example.simplesavings.config.database.AppDatabase
 import com.example.simplesavings.model.category.Category
 import com.example.simplesavings.model.group.Group
@@ -72,7 +73,11 @@ fun Groupsd (modifier: Modifier = Modifier) {
             .fallbackToDestructiveMigration(true)
             .build()
     }
+
+    val groupList by db.groupDao().getAll().collectAsState(initial = emptyList())
+
     var showCard by remember { mutableStateOf( false) }
+    var showCreateCategoryForm by remember { mutableStateOf( false) }
     val scope = rememberCoroutineScope()
 
     if (showCard) {
@@ -82,11 +87,17 @@ fun Groupsd (modifier: Modifier = Modifier) {
             {showCard = false})
     }
 
+    if (showCreateCategoryForm) {
+        CreateCategoryForm(
+            Modifier,
+            db = db,
+            {showCreateCategoryForm = false},
+            groupList)
+    }
+
     Column(modifier = modifier
         .padding(10.dp, 15.dp)
         .verticalScroll(rememberScrollState()) ) {
-
-        val groupList by db.groupDao().getAll().collectAsState(initial = emptyList())
 
         Button (
             onClick = {
@@ -99,8 +110,8 @@ fun Groupsd (modifier: Modifier = Modifier) {
         }
 
         for (group in groupList) {
-            ElevatedCard(
-                elevation = CardDefaults.cardElevation(
+            ElevatedCard (
+                elevation = CardDefaults.cardElevation (
                     defaultElevation = 6.dp
                 ),
                 modifier = Modifier.fillMaxSize().padding(bottom = 20.dp)
@@ -109,19 +120,17 @@ fun Groupsd (modifier: Modifier = Modifier) {
                     modifier = Modifier.fillMaxSize(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
+                    Text (
                         text = group.name,
                         modifier = Modifier
                             .padding(16.dp),
                         textAlign = TextAlign.Center,
                     )
-                    Row (
-
-                    ) {
+                    Row () {
                         Button (
                             onClick = {
                                 scope.launch {
-                                    db.categoryDao().insert(Category(0, "Test"))
+                                    db.categoryDao().insert(Category(0, group.uid,"Test"))
                                 }
                             }
                         ) {
@@ -141,8 +150,18 @@ fun Groupsd (modifier: Modifier = Modifier) {
                             )
                         }
                     }
-
                 }
+
+                Column() {
+//                    val categoryList by db.categoryDao().getAll().collectAsState(initial = emptyList())
+                    val categoryList by db.categoryDao().getCategoriesForGroup(group.uid).collectAsState(initial = emptyList())
+                    for (category in categoryList) {
+                        Text (
+                            text = category.name
+                        )
+                    }
+                }
+
             }
         }
     }
