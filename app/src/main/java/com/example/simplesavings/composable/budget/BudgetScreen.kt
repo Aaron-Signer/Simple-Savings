@@ -201,17 +201,7 @@ fun BudgetScreen (
                 HorizontalDivider(thickness = 2.dp, color = Color.Cyan)
 
                 Column() {
-//                    val categoryList by db.categoryDao().getAll().collectAsState(initial = emptyList())
                     val categoryList by db.categoryDao().getCategoriesForGroup(group.uid).collectAsState(initial = emptyList())
-
-                    for (category in categoryList) {
-                        val transactionListForCategory by db.transactionDao().getTransactionsForCategory(category.uid).collectAsState(initial = emptyList())
-
-                        for (transaction in transactionListForCategory) {
-                            category.spent -= transaction.debit
-                            category.spent += transaction.credit
-                        }
-                    }
 
                     for (category in categoryList) {
                         Row(
