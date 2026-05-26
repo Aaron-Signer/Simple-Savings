@@ -20,14 +20,14 @@ interface CategoryDao {
     suspend fun delete(category: Category)
 
     @Query(
-        "select c.uid as uid, c.name, c.groupUid as groupUid, c.planned, c.spendingType, c.spent\n" +
-                "from `groups` as g \n" +
-                "join (select c.groupUid, c.uid, c.name, c.spendingType, c.planned, sum(t.credit) as spent\n" +
-                "      from category as c\n" +
-                "      join transactions as t\n" +
-                "      on c.uid = t.categoryUid\n" +
-                "      group by c.uid )as c \n" +
-                "on g.uid = c.groupUid \n" +
+        "select c.uid as uid, c.name, c.groupUid as groupUid, c.planned, c.spendingType, c.spent " +
+                "from `groups` as g " +
+                "join (select c.groupUid, c.uid, c.name, c.spendingType, c.planned, TOTAL(t.credit) as spent " +
+                "      from category as c " +
+                "      left join transactions as t " +
+                "      on c.uid = t.categoryUid " +
+                "      group by c.uid ) as c " +
+                "on g.uid = c.groupUid " +
                 "where g.uid = :groupUid"
     )
     fun getCategoriesForGroup(groupUid: Int): Flow<List<Category>>

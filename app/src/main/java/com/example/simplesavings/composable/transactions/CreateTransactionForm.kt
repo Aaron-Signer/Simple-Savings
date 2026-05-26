@@ -41,6 +41,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.simplesavings.model.transaction.Transaction
+import java.time.Instant
+import com.example.simplesavings.util.db.getTransactionSha256Uid
 
 
 @SuppressLint("UnrememberedMutableState")
@@ -147,14 +149,17 @@ fun CreateTransactionForm(
             }
             Button(
                 onClick = {
+                    val dateTime = Instant.now()
+
                     scope.launch {
                         db.transactionDao().insert(
                             Transaction(
-                                0,
-                                selectedCategory.uid,
-                                debit.value.toDouble(),
-                                credit.value.toDouble(),
-                                businessName.value
+                                uid = getTransactionSha256Uid(businessName.value, credit.value.toDouble(), dateTime ),
+                                categoryUid = selectedCategory.uid,
+                                dateTime = dateTime,
+                                debit = debit.value.toDouble(),
+                                credit = credit.value.toDouble(),
+                                businessName = businessName.value
                             )
                         )
                     }

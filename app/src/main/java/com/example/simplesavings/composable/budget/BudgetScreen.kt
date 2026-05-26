@@ -69,8 +69,8 @@ fun BudgetScreen (
         group.plannedTotal = groupPlannedTotal
         group.spentTotal = groupSpentTotal
 
-        if (group.uid == 1 && group.spentTotal > 12.2)
-            print("Larger")
+//        if (group.uid == 1 && group.spentTotal > 12.2)
+//            print("Larger")
     }
 
     var showCard by remember { mutableStateOf( false) }
@@ -222,7 +222,7 @@ fun BudgetScreen (
                                 text = "$${"%.2f".format(category.spent)}",
                                 Modifier.weight(.2F).padding(end = 5.dp),
                                 textAlign = TextAlign.End,
-                                color = if ( percentageSpent > 0 && percentageSpent <= .5)
+                                color = if (percentageSpent in 0.0.. .5)
                                     Color.Green
                                 else if (percentageSpent > .5 && percentageSpent < 1)
                                     Color.Yellow
@@ -233,7 +233,7 @@ fun BudgetScreen (
                                 text = "$${"%.2f".format(category.planned - category.spent)}",
                                 Modifier.weight(remainingColumnWidth).padding(end = 5.dp),
                                 textAlign = TextAlign.End,
-                                color = if ( percentageSpent > 0 && percentageSpent <= .5)
+                                color = if (percentageSpent in 0.0.. .5)
                                     Color.Green
                                 else if (percentageSpent > .5 && percentageSpent < 1)
                                     Color.Yellow
@@ -316,3 +316,4 @@ fun CreateGroupCard(
         }
     }
 }
+

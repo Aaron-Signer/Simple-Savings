@@ -12,6 +12,7 @@ room3CommonJvm = "3.0.0-alpha04"
 room3Runtime = "3.0.0-alpha04"
 material3 = "1.4.0"
 navigationCompose = "2.9.8"
+commonsCsv = "1.10.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -35,6 +36,7 @@ androidx-room3-common-jvm = { group = "androidx.room3", name = "room3-common-jvm
 androidx-room3-runtime = { group = "androidx.room3", name = "room3-runtime", version.ref = "room3Runtime" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+apache-commons-csv = { group = "org.apache.commons", name = "commons-csv", version.ref = "commonsCsv" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -69,4 +69,6 @@ dependencies {
     // See Add the KSP plugin to your project
     ksp("androidx.room:room-compiler:$room_version")
 
+    implementation(libs.apache.commons.csv)
+
 }
