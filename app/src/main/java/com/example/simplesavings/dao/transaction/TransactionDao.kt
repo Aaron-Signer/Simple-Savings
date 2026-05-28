@@ -29,7 +29,7 @@ abstract class TransactionDao {
 
     @Query(
         "select COALESCE(c.name, '') as categoryName, t.uid, t.categoryUid, t.dateTime, t.debit, t.credit, COALESCE(t.businessName, '') as businessName from transactions as t " +
-                "left join category as c on c.uid = t.categoryUid"
+                "left join category as c on c.uid = t.categoryUid order by t.dateTime desc"
     )
     protected abstract fun getTransactionsInternal(): Flow<List<TransactionWithCategory>>
 

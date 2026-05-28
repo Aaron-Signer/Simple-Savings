@@ -12,7 +12,7 @@ import com.example.simplesavings.dao.transaction.TransactionDao
 import com.example.simplesavings.util.db.DateConverters
 
 
-@Database(entities = [Group::class, Category::class, Transaction::class], version = 13)
+@Database(entities = [Group::class, Category::class, Transaction::class], version = 19)
 @TypeConverters(DateConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun groupDao(): GroupDao

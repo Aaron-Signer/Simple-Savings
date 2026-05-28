@@ -23,6 +23,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.simplesavings.composable.budget.BudgetScreen
 import com.example.simplesavings.composable.transactions.TransactionsView
 import com.example.simplesavings.config.database.AppDatabase

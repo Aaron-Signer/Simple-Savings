@@ -11,10 +11,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,15 +26,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 
 import com.example.simplesavings.config.database.AppDatabase
+import com.example.simplesavings.model.category.Category
 import com.example.simplesavings.model.transaction.Transaction
 import com.example.simplesavings.util.db.getTransactionSha256Uid
 import kotlinx.coroutines.Dispatchers
@@ -40,19 +47,25 @@ import kotlinx.coroutines.withContext
 import org.apache.commons.csv.CSVFormat
 import java.io.InputStream
 import java.security.MessageDigest
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-@SuppressLint("UnrememberedMutableState")
 @Composable
 fun TransactionsView (
     modifier: Modifier = Modifier,
     db: AppDatabase
 ) {
-    val transactionList by db.transactionDao().getTransactionsWithNames().collectAsState(initial = emptyList())
+    val transactionListFlow = remember(db) { db.transactionDao().getTransactionsWithNames() }
+    val categoryListFlow = remember(db) { db.categoryDao().getAll() }
+
+    val transactionList by transactionListFlow.collectAsState(initial = emptyList())
+    val categoryList by categoryListFlow.collectAsState(initial = emptyList())
+
     val scope = rememberCoroutineScope() // To run the background task
     val context = LocalContext.current
+
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -63,7 +76,7 @@ fun TransactionsView (
                     try {
                         context.contentResolver.openInputStream(selectedUri)?.use { inputStream ->
                             // Example: Read bytes
-                            val transactionList = readCsv(inputStream)
+                            val transactionList = readCsv(inputStream).reversed()
 //                            val fileData = inputStream.readBytes()
 
                             print("here")
@@ -71,6 +84,7 @@ fun TransactionsView (
                             withContext(Dispatchers.Main) {
                                 // Update your database or UI here
                                 for (transaction in transactionList) {
+//                                    transaction.dateTime = Instant.now()
                                     db.transactionDao().insert(transaction)
                                 }
                             }
@@ -93,74 +107,30 @@ fun TransactionsView (
             { showCreateTransactionForm = false })
     }
 
-//    val transactionList = mutableListOf<Transaction>()
-//
-//    for (i in 1..40) {
-//        transactionList.add(
-//            Transaction(
-//                uid = i,
-//                categoryUid = 1,
-//                debit = 10.0 * i,
-//                businessName = "Business $i"
-//            )
-//        )
-//    }
-
-    Box(modifier = modifier.fillMaxSize()) {
-        Column(
+    Box(
+        modifier = modifier.fillMaxSize()
+    ) {
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(10.dp)
-                .verticalScroll(rememberScrollState())
         ) {
-            for (transaction in transactionList) {
-                ElevatedCard(
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 6.dp
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp, vertical = 5.dp)
-                ) {
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp)
-                    ) {
-                        Text(
-                            text = "Business: ${transaction.businessName}"
-                        )
-
-                        Text(
-                            text = "Category: ${transaction.categoryName}"
-                        )
-
-                        Text(
-                            text = "Date/Time: ${transaction.dateTime}"
-                        )
-
-                        if (transaction.debit != 0.0) {
-                            Text(
-                                text = "+${transaction.debit}",
-                                color = Color.Green
-                            )
-                        } else if (transaction.credit != 0.0) {
-                            Text(
-                                text = "-${transaction.credit}",
-                                color = Color.Red
-                            )
-                        }
-                    }
-                }
+            items(
+                items = transactionList,
+                key = { it.uid }
+            ) { transaction ->
+                TransactionCard(
+                    transaction = transaction,
+                    categoryList = categoryList
+                )
             }
         }
+
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .align(Alignment.BottomEnd)
                 .zIndex(100F)
                 .padding(16.dp),
-            contentAlignment = Alignment.BottomEnd,
         ) {
             Row {
                 Button(
@@ -182,10 +152,89 @@ fun TransactionsView (
                     )
                 }
             }
-
         }
     }
 }
+
+@Composable
+fun TransactionCard(
+    transaction: Transaction,
+    categoryList: List<Category>
+) {
+    var mExpanded by rememberSaveable(transaction.uid) { mutableStateOf(false) }
+
+    ElevatedCard(
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 6.dp
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 5.dp, vertical = 5.dp)
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            Text(
+                text = "Business",
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "${transaction.businessName}",
+                modifier = Modifier.padding(bottom = 5.dp)
+            )
+
+            Text(
+                text = "Date/Time: ${transaction.dateTime}",
+                modifier = Modifier.padding(bottom = 5.dp)
+            )
+
+            if (transaction.debit != 0.0) {
+                Text(
+                    text = "+${transaction.debit}",
+                    color = Color.Green,
+                    modifier = Modifier.padding(bottom = 5.dp),
+                    fontSize = 22.sp
+                )
+            } else if (transaction.credit != 0.0) {
+                Text(
+                    text = "-${transaction.credit}",
+                    color = Color.Red,
+                    modifier = Modifier.padding(bottom = 5.dp),
+                    fontSize = 22.sp
+                )
+            }
+
+            Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
+                Button(
+                    onClick = { mExpanded = true }
+                ) {
+                    Text(
+                        text = "Category: ${if (transaction.categoryName == "") "None" else transaction.categoryName}",
+                        color = if (transaction.categoryName == "") Color.Red else Color.Green
+                    )
+                }
+                DropdownMenu(
+                    expanded = mExpanded,
+                    onDismissRequest = { mExpanded = false },
+                ) {
+                    categoryList.forEach { label ->
+                        DropdownMenuItem(
+                            text = { Text(text = label.name) },
+                            onClick = {
+                                // Note: You'll likely want to pass a callback here to update the DB
+                                mExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 fun readCsv(inputStream: InputStream): List<Transaction> =
     CSVFormat.Builder.create(CSVFormat.DEFAULT).apply {

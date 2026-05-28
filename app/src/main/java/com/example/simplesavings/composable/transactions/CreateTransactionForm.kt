@@ -2,8 +2,11 @@ package com.example.simplesavings.composable.transactions
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,6 +42,8 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.simplesavings.model.transaction.Transaction
 import java.time.Instant
@@ -53,9 +58,9 @@ fun CreateTransactionForm(
     onDismiss: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    var businessName: MutableState<String> = mutableStateOf("")
-    var debit: MutableState<String> = mutableStateOf("0.0")
-    var credit: MutableState<String> = mutableStateOf("0.0")
+    var businessName by remember {mutableStateOf("")}
+    var debit by remember { mutableStateOf("")}
+    var credit by remember {mutableStateOf("")}
 
     var mExpanded by remember { mutableStateOf(false) }
 
@@ -71,43 +76,58 @@ fun CreateTransactionForm(
         Icons.Filled.KeyboardArrowDown
 
     val categoryList by db.categoryDao().getAll().collectAsState(initial = emptyList())
-
+    val focusManager = LocalFocusManager.current // 1. Get the focus manager
 
     Box(
-        modifier = modifier.fillMaxSize().zIndex(100F),
-        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .fillMaxSize()
+            .zIndex(100F)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus() // 3. Clear focus to hide keyboard
+                })
+            },
+        contentAlignment = Alignment.TopCenter,
 
     ) {
         ElevatedCard(
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 6.dp
             ),
-            modifier = Modifier.fillMaxWidth(.75F).fillMaxHeight(.60F).border(1.dp, Color.White)
+            modifier = Modifier
+                .padding(10.dp)
+                .border(1.dp, Color.White)
         ) {
             Text(
                 text = "Transaction Form",
                 Modifier.padding(10.dp)
             )
             TextField(
-                value = businessName.value,
-                onValueChange = { businessName.value = it },
+                value = businessName,
+                onValueChange = { businessName = it },
                 label = { Text("Business Name")},
-                modifier = Modifier.fillMaxWidth().padding(10.dp)
+                modifier = Modifier
+                    .fillMaxWidth(.75F)
+                    .padding(10.dp)
             )
 
             TextField (
-                value = debit.value,
-                onValueChange = { debit.value = it },
+                value = debit,
+                onValueChange = { debit = it },
                 label = { Text("Debit")},
-                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth(.75F)
+                    .padding(10.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
 
             TextField (
-                value = credit.value,
-                onValueChange = { credit.value = it },
+                value = credit,
+                onValueChange = { credit = it },
                 label = { Text("Credit")},
-                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth(.75F)
+                    .padding(10.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
 
@@ -147,37 +167,52 @@ fun CreateTransactionForm(
                     }
                 }
             }
-            Button(
-                onClick = {
-                    val dateTime = Instant.now()
+            Row (
+                modifier = Modifier.fillMaxWidth(.75F),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(
+                    enabled = businessName != "" && selectedCategory.uid != -1 && (credit != "" || debit != ""),
+                    onClick = {
+                        val dateTime = Instant.now()
 
-                    scope.launch {
-                        db.transactionDao().insert(
-                            Transaction(
-                                uid = getTransactionSha256Uid(businessName.value, credit.value.toDouble(), dateTime ),
-                                categoryUid = selectedCategory.uid,
-                                dateTime = dateTime,
-                                debit = debit.value.toDouble(),
-                                credit = credit.value.toDouble(),
-                                businessName = businessName.value
+                        scope.launch {
+                            db.transactionDao().insert(
+                                Transaction(
+                                    uid = getTransactionSha256Uid(
+                                        businessName,
+                                        credit.toDouble(),
+                                        dateTime
+                                    ),
+                                    categoryUid = selectedCategory.uid,
+                                    dateTime = dateTime,
+                                    debit = if (debit == "") 0.0 else debit.toDouble(),
+                                    credit = if (credit == "") 0.0 else credit.toDouble(),
+                                    businessName = businessName
+                                )
                             )
-                        )
-                    }
-                },
+
+                            businessName = ""
+                            credit = ""
+                            debit = ""
+                            selectedCategory = Category(-1, -1, "")
+                        }
+                    },
 //                enabled = categoryName.value != "" && selectedGroup.uid != -1
-            ) {
-                Text(
-                    text = "Add Category"
-                )
-            }
-            Button(
-                onClick = {
-                    onDismiss()
+                ) {
+                    Text(
+                        text = "Save Transaction"
+                    )
                 }
-            ) {
-                Text(
-                    text = "Close"
-                )
+                Button(
+                    onClick = {
+                        onDismiss()
+                    }
+                ) {
+                    Text(
+                        text = "Close"
+                    )
+                }
             }
         }
     }

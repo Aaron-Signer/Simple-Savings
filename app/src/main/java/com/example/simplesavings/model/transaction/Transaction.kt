@@ -17,12 +17,12 @@ data class Transaction (
     var debit: Double = 0.0,
     var credit: Double = 0.0,
 
-    var businessName: String? = "",
+    var businessName: String = "",
 
     @Ignore
-    var categoryName: String? = ""
+    var categoryName: String = ""
 ) {
-    constructor(uid: String, categoryUid: Int, dateTime: Instant, debit: Double, credit: Double, businessName: String?) :
+    constructor(uid: String, categoryUid: Int, dateTime: Instant, debit: Double, credit: Double, businessName: String) :
             this(uid, categoryUid, dateTime,debit, credit, businessName, categoryName = "")
 
 }
