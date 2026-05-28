@@ -13,10 +13,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -30,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import java.util.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -37,6 +44,9 @@ import com.example.simplesavings.composable.CreateCategoryForm
 import com.example.simplesavings.config.database.AppDatabase
 import com.example.simplesavings.model.group.Group
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun BudgetScreen (
@@ -44,9 +54,21 @@ fun BudgetScreen (
     db: AppDatabase
 ) {
 
+    val yearFormatter = DateTimeFormatter.ofPattern("YYYY", Locale.getDefault())
+    var currentMonthAndYear by remember {mutableStateOf(Instant.now())}
+    var currentYearString = currentMonthAndYear
+        .atZone(ZoneId.systemDefault())
+        .format(yearFormatter)
+
+    val monthFormatter = DateTimeFormatter.ofPattern("MMMM", Locale.getDefault())
+//    var currentMonth by remember {mutableStateOf(Instant.now())}
+    var currentMonthString = currentMonthAndYear
+        .atZone(ZoneId.systemDefault())
+        .format(monthFormatter)
+
     val typeColumnWidth = .15F
     val remainingColumnWidth = .25F
-    val groupList by db.groupDao().getAll().collectAsState(initial = emptyList())
+    val groupList by db.groupDao().getAll(currentMonthString, currentYearString).collectAsState(initial = emptyList())
 
     for (group in groupList) {
         val categoryListForGroup by db.categoryDao().getCategoriesForGroup(group.uid).collectAsState(initial = emptyList())
@@ -81,7 +103,9 @@ fun BudgetScreen (
         CreateGroupCard(
             Modifier,
             db = db,
-            {showCard = false})
+            {showCard = false},
+            currentMonthString = currentMonthString,
+            currentYearString = currentYearString)
     }
 
     if (showCreateCategoryForm) {
@@ -89,22 +113,83 @@ fun BudgetScreen (
             Modifier,
             db = db,
             {showCreateCategoryForm = false},
-            groupList)
+            groupList,
+            currentMonthString,
+            currentYearString                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           )
     }
+
+
+
+
 
     Column(modifier = modifier
         .padding(10.dp, 15.dp)
         .verticalScroll(rememberScrollState()) ) {
+        Row (
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            IconButton(
+                onClick = {
+                    currentMonthAndYear = currentMonthAndYear
+                        .atZone(ZoneId.systemDefault()) // Convert to ZonedDateTime
+                        .minusMonths(1)                // Subtract one month
+                        .toInstant()
+
+                    currentMonthString = currentMonthAndYear
+                        .atZone(ZoneId.systemDefault())
+                        .format(monthFormatter)
+
+                    currentYearString = currentMonthAndYear
+                        .atZone(ZoneId.systemDefault())
+                        .format(yearFormatter)
+                },
+            ) {
+                Icon (
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Backward"
+                )
+            }
+            Text (
+                text = "${currentMonthString} ${currentYearString}"
+            )
+            IconButton(
+                onClick = {
+                    currentMonthAndYear = currentMonthAndYear
+                        .atZone(ZoneId.systemDefault()) // Convert to ZonedDateTime
+                        .plusMonths(1)                // Subtract one month
+                        .toInstant()
+
+                    currentMonthString = currentMonthAndYear
+                        .atZone(ZoneId.systemDefault())
+                        .format(monthFormatter)
+
+                    currentYearString = currentMonthAndYear
+                        .atZone(ZoneId.systemDefault())
+                        .format(yearFormatter)
+                },
+            ) {
+                Icon (
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Forward"
+                )
+            }
+        }
         for (group in groupList) {
 
             ElevatedCard (
                 elevation = CardDefaults.cardElevation (
                     defaultElevation = 6.dp
                 ),
-                modifier = Modifier.fillMaxSize().padding(20.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp)
             ) {
                 Row (
-                    modifier = Modifier.fillMaxSize().padding(5.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(5.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column (
@@ -141,7 +226,9 @@ fun BudgetScreen (
                     }
                 }
                 Row(
-                    Modifier.padding(5.dp).fillMaxWidth(),
+                    Modifier
+                        .padding(5.dp)
+                        .fillMaxWidth(),
 
                     ) {
                     Text (
@@ -150,12 +237,16 @@ fun BudgetScreen (
                     )
                     Text (
                         text = "$${"%.2f".format(group.plannedTotal)}",
-                        Modifier.weight(.2F).padding(end = 5.dp),
+                        Modifier
+                            .weight(.2F)
+                            .padding(end = 5.dp),
                         textAlign = TextAlign.End
                     )
                     Text (
                         text = "$${"%.2f".format(group.spentTotal)}",
-                        Modifier.weight(.2F).padding(end = 5.dp),
+                        Modifier
+                            .weight(.2F)
+                            .padding(end = 5.dp),
                         textAlign = TextAlign.End
                     )
                     Text (
@@ -205,7 +296,9 @@ fun BudgetScreen (
 
                     for (category in categoryList) {
                         Row(
-                            Modifier.padding(5.dp).fillMaxWidth(),
+                            Modifier
+                                .padding(5.dp)
+                                .fillMaxWidth(),
 
                             ) {
                             Text (
@@ -214,13 +307,17 @@ fun BudgetScreen (
                             )
                             Text (
                                 text = "$${"%.2f".format(category.planned)}",
-                                Modifier.weight(.2F).padding(end = 5.dp),
+                                Modifier
+                                    .weight(.2F)
+                                    .padding(end = 5.dp),
                                 textAlign = TextAlign.End
                             )
                             val percentageSpent = category.spent / category.planned
                             Text (
                                 text = "$${"%.2f".format(category.spent)}",
-                                Modifier.weight(.2F).padding(end = 5.dp),
+                                Modifier
+                                    .weight(.2F)
+                                    .padding(end = 5.dp),
                                 textAlign = TextAlign.End,
                                 color = if (percentageSpent in 0.0.. .5)
                                     Color.Green
@@ -231,7 +328,9 @@ fun BudgetScreen (
                             )
                             Text (
                                 text = "$${"%.2f".format(category.planned - category.spent)}",
-                                Modifier.weight(remainingColumnWidth).padding(end = 5.dp),
+                                Modifier
+                                    .weight(remainingColumnWidth)
+                                    .padding(end = 5.dp),
                                 textAlign = TextAlign.End,
                                 color = if (percentageSpent in 0.0.. .5)
                                     Color.Green
@@ -253,7 +352,10 @@ fun BudgetScreen (
             }
         }
         Box (
-            modifier = modifier.fillMaxSize().zIndex(100F).padding(bottom = 50.dp),
+            modifier = modifier
+                .fillMaxSize()
+                .zIndex(100F)
+                .padding(bottom = 50.dp),
             contentAlignment = Alignment.BottomEnd,
         ) {
             Button (
@@ -274,19 +376,25 @@ fun BudgetScreen (
 fun CreateGroupCard(
     modifier: Modifier = Modifier,
     db: AppDatabase,
-    onDismiss: () -> Unit) {
+    onDismiss: () -> Unit,
+    currentMonthString: String,
+    currentYearString: String) {
     val scope = rememberCoroutineScope()
     var groupName: MutableState<String> = mutableStateOf("")
 
     Box(
-        modifier = modifier.fillMaxSize().zIndex(100F),
+        modifier = modifier
+            .fillMaxSize()
+            .zIndex(100F),
         contentAlignment = Alignment.Center
     ) {
         ElevatedCard(
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 6.dp
             ),
-            modifier = Modifier.height(200.dp).width(200.dp)
+            modifier = Modifier
+                .height(200.dp)
+                .width(200.dp)
         ) {
             TextField(
                 value = groupName.value,
@@ -295,7 +403,7 @@ fun CreateGroupCard(
             Button(
                 onClick = {
                     scope.launch {
-                        db.groupDao().insert(Group(0, groupName.value))
+                        db.groupDao().insert(Group(0, groupName.value, month = currentMonthString, year = currentYearString))
                     }
                 },
                 enabled = groupName.value != ""

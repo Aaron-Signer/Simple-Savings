@@ -66,7 +66,9 @@ fun CreateCategoryForm(
     modifier: Modifier = Modifier,
     db: AppDatabase,
     onDismiss: () -> Unit,
-    groupList: List<Group>
+    groupList: List<Group>,
+    currentMonthString: String,
+    currentYearString: String
 ) {
     val scope = rememberCoroutineScope()
     var categoryName: MutableState<String> = mutableStateOf("")
@@ -86,7 +88,7 @@ fun CreateCategoryForm(
     else
         Icons.Filled.KeyboardArrowDown
 
-    val groupList by db.groupDao().getAll().collectAsState(initial = emptyList())
+    val groupList by db.groupDao().getAll(currentMonthString, currentYearString).collectAsState(initial = emptyList())
 
 
     Box(

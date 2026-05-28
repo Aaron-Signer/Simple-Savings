@@ -9,5 +9,8 @@ data class Group (
     val name: String,
 
     var plannedTotal: Double = 0.0,
-    var spentTotal: Double = 0.0
+    var spentTotal: Double = 0.0,
+
+    var month: String = "",
+    var year: String = ""
 )

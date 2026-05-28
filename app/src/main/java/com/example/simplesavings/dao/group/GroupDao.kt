@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface GroupDao {
-    @Query("SELECT * FROM groups")
-    fun getAll(): Flow<List<Group>>
+    @Query("SELECT * FROM groups where month = :month and year = :year")
+    fun getAll(month: String, year: String): Flow<List<Group>>
 
     @Insert
     suspend fun insert(group: Group)
