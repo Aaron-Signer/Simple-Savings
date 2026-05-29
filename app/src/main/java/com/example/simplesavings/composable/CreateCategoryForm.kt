@@ -3,8 +3,11 @@ package com.example.simplesavings.composable
 import android.annotation.SuppressLint
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,13 +49,16 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -71,9 +77,9 @@ fun CreateCategoryForm(
     currentYearString: String
 ) {
     val scope = rememberCoroutineScope()
-    var categoryName: MutableState<String> = mutableStateOf("")
-    var categoryPlanned: MutableState<String> = mutableStateOf("")
-    var categorySpendingType: MutableState<SpendingType> = mutableStateOf(SpendingType.FIXED)
+    var categoryName by remember {mutableStateOf("")}
+    var categoryPlanned by remember {mutableStateOf("")}
+    var categorySpendingType by remember {mutableStateOf(SpendingType.FIXED)}
 
     var mExpanded by remember { mutableStateOf(false) }
 
@@ -89,37 +95,69 @@ fun CreateCategoryForm(
         Icons.Filled.KeyboardArrowDown
 
     val groupList by db.groupDao().getAll(currentMonthString, currentYearString).collectAsState(initial = emptyList())
+    val focusManager = LocalFocusManager.current // 1. Get the focus manager
 
 
     Box(
-        modifier = modifier.fillMaxSize().zIndex(100F),
-        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .fillMaxSize()
+            .zIndex(100F)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus() // 3. Clear focus to hide keyboard
+                })
+            },
+        contentAlignment = Alignment.TopCenter,
 
     ) {
         ElevatedCard(
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 6.dp
             ),
-            modifier = Modifier.fillMaxWidth(.75F).fillMaxHeight(.60F).border(1.dp, Color.White)
+            modifier = Modifier.border(1.dp, Color.White)
         ) {
             Text(
                 text = "Category Form",
                 Modifier.padding(10.dp)
             )
             TextField(
-                value = categoryName.value,
-                onValueChange = { categoryName.value = it },
+                value = categoryName,
+                onValueChange = { categoryName = it },
                 label = { Text("Category Name")},
-                modifier = Modifier.fillMaxWidth().padding(10.dp)
+                modifier = Modifier
+                    .padding(10.dp)
+                    .fillMaxWidth(.75F)
             )
 
             TextField(
-                value = categoryPlanned.value,
-                onValueChange = { categoryPlanned.value = it },
+                value = categoryPlanned,
+                onValueChange = { categoryPlanned = it },
                 label = { Text("Planned Amount")},
-                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                modifier = Modifier
+                    .padding(10.dp)
+                    .fillMaxWidth(.75F),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(
+                        selected = categorySpendingType == SpendingType.FIXED,
+                        onClick = { categorySpendingType = SpendingType.FIXED }
+                    )
+                    Text("Fixed")
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(
+                        selected = categorySpendingType == SpendingType.VARIABLE,
+                        onClick = { categorySpendingType = SpendingType.VARIABLE }
+                    )
+                    Text("Variable")
+                }
+            }
 
             Text(
                 text = "Group: ${selectedGroup.name}",
@@ -157,33 +195,40 @@ fun CreateCategoryForm(
                     }
                 }
             }
-            Button(
-                onClick = {
-                    scope.launch {
-                        db.categoryDao().insert(
-                            Category(
-                                0,
-                                selectedGroup.uid,
-                                categoryName.value,
-                                planned = categoryPlanned.value.toDouble(),
-                                spendingType = SpendingType.FIXED)
-                        )
-                    }
-                },
-                enabled = categoryName.value != "" && selectedGroup.uid != -1
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth(.75F),
+                horizontalArrangement = Arrangement.SpaceAround
             ) {
-                Text(
-                    text = "Add Group"
-                )
-            }
-            Button(
-                onClick = {
-                    onDismiss()
+                Button(
+                    onClick = {
+                        scope.launch {
+                            db.categoryDao().insert(
+                                Category(
+                                    0,
+                                    selectedGroup.uid,
+                                    categoryName,
+                                    planned = categoryPlanned.toDouble(),
+                                    spendingType = categorySpendingType
+                                )
+                            )
+                        }
+                    },
+                    enabled = categoryName != "" && selectedGroup.uid != -1
+                ) {
+                    Text(
+                        text = "Add Group"
+                    )
                 }
-            ) {
-                Text(
-                    text = "Close"
-                )
+                Button(
+                    onClick = {
+                        onDismiss()
+                    }
+                ) {
+                    Text(
+                        text = "Close"
+                    )
+                }
             }
         }
     }

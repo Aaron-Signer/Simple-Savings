@@ -36,13 +36,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import java.util.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.example.simplesavings.composable.CreateCategoryForm
 import com.example.simplesavings.config.database.AppDatabase
+import com.example.simplesavings.model.category.SpendingType
 import com.example.simplesavings.model.group.Group
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -115,12 +118,8 @@ fun BudgetScreen (
             {showCreateCategoryForm = false},
             groupList,
             currentMonthString,
-            currentYearString                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           )
+            currentYearString)
     }
-
-
-
-
 
     Column(modifier = modifier
         .padding(10.dp, 15.dp)
@@ -176,179 +175,205 @@ fun BudgetScreen (
                 )
             }
         }
-        for (group in groupList) {
 
-            ElevatedCard (
-                elevation = CardDefaults.cardElevation (
-                    defaultElevation = 6.dp
-                ),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp)
+        if (groupList.isEmpty()) {
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
             ) {
-                Row (
+                Button(
+                    onClick = {
+                        scope.launch {
+                            copyGroupsAndCategories(
+                                db,
+                                currentMonthAndYear,
+                                monthFormatter,
+                                yearFormatter
+                            )
+                        }
+                    }
+                ) {
+                    Text(
+                        text = "Copy Last Month's Budget"
+                    )
+                }
+            }
+        } else {
+            for (group in groupList) {
+
+                ElevatedCard(
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 6.dp
+                    ),
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(5.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(20.dp)
                 ) {
-                    Column (
-                        verticalArrangement = Arrangement.Center
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(5.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text (
-                            text = group.name
+                        Column(
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = group.name
+                            )
+                        }
+
+                        Row(
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Button(
+                                onClick = {
+                                    showCreateCategoryForm = true
+                                }
+                            ) {
+                                Text(
+                                    text = "Add Cat"
+                                )
+                            }
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        db.groupDao().delete(group)
+                                    }
+                                }
+                            ) {
+                                Text(
+                                    text = "Del"
+                                )
+                            }
+                        }
+                    }
+                    Row(
+                        Modifier
+                            .padding(5.dp)
+                            .fillMaxWidth(),
+
+                        ) {
+                        Text(
+                            text = "",
+                            Modifier.weight(.2F)
+                        )
+                        Text(
+                            text = "$${"%.2f".format(group.plannedTotal)}",
+                            Modifier
+                                .weight(.2F)
+                                .padding(end = 5.dp),
+                            textAlign = TextAlign.End
+                        )
+                        Text(
+                            text = "$${"%.2f".format(group.spentTotal)}",
+                            Modifier
+                                .weight(.2F)
+                                .padding(end = 5.dp),
+                            textAlign = TextAlign.End
+                        )
+                        Text(
+                            text = "",
+                            Modifier.weight(remainingColumnWidth)
+                        )
+                        Text(
+                            text = "",
+                            Modifier.weight(typeColumnWidth)
                         )
                     }
-
-                    Row (
-                        horizontalArrangement = Arrangement.End
+                    HorizontalDivider(thickness = 1.dp)
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Button (
-                            onClick = {
-                                showCreateCategoryForm = true
+                        Text(
+                            text = "Category",
+                            modifier = Modifier.weight(.2F),
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "Planned",
+                            Modifier.weight(.2F),
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "Spent",
+                            Modifier.weight(.2F),
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "Remaining",
+                            Modifier.weight(remainingColumnWidth),
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "Type",
+                            Modifier.weight(typeColumnWidth),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    HorizontalDivider(thickness = 2.dp, color = Color.Cyan)
+
+                    Column() {
+                        val categoryList by db.categoryDao().getCategoriesForGroup(group.uid)
+                            .collectAsState(initial = emptyList())
+
+                        for (category in categoryList) {
+                            Row(
+                                Modifier
+                                    .padding(5.dp)
+                                    .fillMaxWidth(),
+
+                                ) {
+                                Text(
+                                    text = category.name,
+                                    Modifier.weight(.2F),
+                                )
+                                Text(
+                                    text = "$${"%.2f".format(category.planned)}",
+                                    Modifier
+                                        .weight(.2F)
+                                        .padding(end = 5.dp),
+                                    textAlign = TextAlign.End
+                                )
+                                val percentageSpent = category.spent / category.planned
+                                Text(
+                                    text = "$${"%.2f".format(category.spent)}",
+                                    Modifier
+                                        .weight(.2F)
+                                        .padding(end = 5.dp),
+                                    textAlign = TextAlign.End,
+                                    color = if (percentageSpent in 0.0.. .5)
+                                        Color.Green
+                                    else if (percentageSpent > .5 && percentageSpent < 1)
+                                        Color.Yellow
+                                    else
+                                        Color.Red
+                                )
+                                Text(
+                                    text = "$${"%.2f".format(category.planned - category.spent)}",
+                                    Modifier
+                                        .weight(remainingColumnWidth)
+                                        .padding(end = 5.dp),
+                                    textAlign = TextAlign.End,
+                                    color = if (percentageSpent in 0.0.. .5)
+                                        Color.Green
+                                    else if (percentageSpent > .5 && percentageSpent < 1)
+                                        Color.Yellow
+                                    else
+                                        Color.Red
+                                )
+                                Text(
+                                    text = if (category.spendingType == SpendingType.FIXED) "FXD" else "VAR",
+                                    Modifier.weight(typeColumnWidth)
+                                )
                             }
-                        ) {
-                            Text (
-                                text = "Add Cat"
-                            )
-                        }
-                        Button (
-                            onClick = {
-                                scope.launch {
-                                    db.groupDao().delete(group)
-                                }
-                            }
-                        ) {
-                            Text (
-                                text = "Del"
-                            )
+                            HorizontalDivider(thickness = 1.dp)
+
                         }
                     }
+
                 }
-                Row(
-                    Modifier
-                        .padding(5.dp)
-                        .fillMaxWidth(),
-
-                    ) {
-                    Text (
-                        text = "",
-                        Modifier.weight(.2F)
-                    )
-                    Text (
-                        text = "$${"%.2f".format(group.plannedTotal)}",
-                        Modifier
-                            .weight(.2F)
-                            .padding(end = 5.dp),
-                        textAlign = TextAlign.End
-                    )
-                    Text (
-                        text = "$${"%.2f".format(group.spentTotal)}",
-                        Modifier
-                            .weight(.2F)
-                            .padding(end = 5.dp),
-                        textAlign = TextAlign.End
-                    )
-                    Text (
-                        text = "",
-                        Modifier.weight(remainingColumnWidth)
-                    )
-                    Text (
-                        text = "",
-                        Modifier.weight(typeColumnWidth)
-                    )
-                }
-                HorizontalDivider(thickness = 1.dp)
-                Row (
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text (
-                        text = "Category",
-                        modifier = Modifier.weight(.2F),
-                        textAlign = TextAlign.Center
-                    )
-                    Text (
-                        text = "Planned",
-                        Modifier.weight(.2F),
-                        textAlign = TextAlign.Center
-                    )
-                    Text (
-                        text = "Spent",
-                        Modifier.weight(.2F),
-                        textAlign = TextAlign.Center
-                    )
-                    Text (
-                        text = "Remaining",
-                        Modifier.weight(remainingColumnWidth),
-                        textAlign = TextAlign.Center
-                    )
-                    Text (
-                        text = "Type",
-                        Modifier.weight(typeColumnWidth),
-                        textAlign = TextAlign.Center
-                    )
-                }
-                HorizontalDivider(thickness = 2.dp, color = Color.Cyan)
-
-                Column() {
-                    val categoryList by db.categoryDao().getCategoriesForGroup(group.uid).collectAsState(initial = emptyList())
-
-                    for (category in categoryList) {
-                        Row(
-                            Modifier
-                                .padding(5.dp)
-                                .fillMaxWidth(),
-
-                            ) {
-                            Text (
-                                text = category.name,
-                                Modifier.weight(.2F),
-                            )
-                            Text (
-                                text = "$${"%.2f".format(category.planned)}",
-                                Modifier
-                                    .weight(.2F)
-                                    .padding(end = 5.dp),
-                                textAlign = TextAlign.End
-                            )
-                            val percentageSpent = category.spent / category.planned
-                            Text (
-                                text = "$${"%.2f".format(category.spent)}",
-                                Modifier
-                                    .weight(.2F)
-                                    .padding(end = 5.dp),
-                                textAlign = TextAlign.End,
-                                color = if (percentageSpent in 0.0.. .5)
-                                    Color.Green
-                                else if (percentageSpent > .5 && percentageSpent < 1)
-                                    Color.Yellow
-                                else
-                                    Color.Red
-                            )
-                            Text (
-                                text = "$${"%.2f".format(category.planned - category.spent)}",
-                                Modifier
-                                    .weight(remainingColumnWidth)
-                                    .padding(end = 5.dp),
-                                textAlign = TextAlign.End,
-                                color = if (percentageSpent in 0.0.. .5)
-                                    Color.Green
-                                else if (percentageSpent > .5 && percentageSpent < 1)
-                                    Color.Yellow
-                                else
-                                    Color.Red
-                            )
-                            Text (
-                                text = category.spendingType.toString(),
-                                Modifier.weight(typeColumnWidth)
-                            )
-                        }
-                        HorizontalDivider(thickness = 1.dp)
-
-                    }
-                }
-
             }
         }
         Box (
@@ -367,6 +392,58 @@ fun BudgetScreen (
                     text = "Add Group"
                 )
             }
+        }
+    }
+}
+
+suspend fun copyGroupsAndCategories(
+    db: AppDatabase,
+    currentMonthAndYear: Instant,
+    monthFormatter: DateTimeFormatter,
+    yearFormatter: DateTimeFormatter
+) {
+    val previousMonthAndYear = currentMonthAndYear
+        .atZone(ZoneId.systemDefault())
+        .minusMonths(1)
+        .toInstant()
+
+    val prevMonthString = previousMonthAndYear
+        .atZone(ZoneId.systemDefault())
+        .format(monthFormatter)
+
+    val prevYearString = previousMonthAndYear
+        .atZone(ZoneId.systemDefault())
+        .format(yearFormatter)
+
+    val currentMonthString = currentMonthAndYear
+        .atZone(ZoneId.systemDefault())
+        .format(monthFormatter)
+
+    val currentYearString = currentMonthAndYear
+        .atZone(ZoneId.systemDefault())
+        .format(yearFormatter)
+
+    val previousMonthGroupList = db.groupDao().getAll(prevMonthString, prevYearString).first()
+
+    for (group in previousMonthGroupList) {
+        val categoryList = db.categoryDao().getCategoriesForGroup(group.uid).first()
+
+        val newGroup = group.copy(
+            uid = 0,
+            month = currentMonthString,
+            year = currentYearString,
+            plannedTotal = 0.0,
+            spentTotal = 0.0
+        )
+        val insertedGroupUid = db.groupDao().insert(newGroup)
+
+        for (category in categoryList) {
+            val newCategory = category.copy(
+                uid = 0,
+                groupUid = insertedGroupUid.toInt(),
+                spent = 0.0
+            )
+            db.categoryDao().insert(newCategory)
         }
     }
 }

@@ -14,7 +14,7 @@ interface GroupDao {
     fun getAll(month: String, year: String): Flow<List<Group>>
 
     @Insert
-    suspend fun insert(group: Group)
+    suspend fun insert(group: Group): Long
 
     @Delete
     suspend fun delete(group: Group)

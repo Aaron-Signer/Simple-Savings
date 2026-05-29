@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "groups")
 data class Group (
-    @PrimaryKey(autoGenerate = true) val uid: Int,
+    @PrimaryKey(autoGenerate = true) var uid: Int,
     val name: String,
 
     var plannedTotal: Double = 0.0,
