@@ -11,11 +11,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -30,6 +41,10 @@ import com.example.simplesavings.composable.transactions.TransactionsView
 import com.example.simplesavings.config.database.AppDatabase
 import com.example.simplesavings.enums.Navigation
 import com.example.simplesavings.ui.theme.SimpleSavingsTheme
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,6 +91,72 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
+                        val yearFormatter = DateTimeFormatter.ofPattern("YYYY", Locale.getDefault())
+                        var currentMonthAndYear by remember {mutableStateOf(Instant.now())}
+                        var currentYearString = currentMonthAndYear
+                            .atZone(ZoneId.systemDefault())
+                            .format(yearFormatter)
+
+                        val monthFormatter = DateTimeFormatter.ofPattern("MMMM", Locale.getDefault())
+//    var currentMonth by remember {mutableStateOf(Instant.now())}
+                        var currentMonthString = currentMonthAndYear
+                            .atZone(ZoneId.systemDefault())
+                            .format(monthFormatter)
+
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        currentMonthAndYear = currentMonthAndYear
+                                            .atZone(ZoneId.systemDefault()) // Convert to ZonedDateTime
+                                            .minusMonths(1)                // Subtract one month
+                                            .toInstant()
+
+                                        currentMonthString = currentMonthAndYear
+                                            .atZone(ZoneId.systemDefault())
+                                            .format(monthFormatter)
+
+                                        currentYearString = currentMonthAndYear
+                                            .atZone(ZoneId.systemDefault())
+                                            .format(yearFormatter)
+                                    },
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Backward"
+                                    )
+                                }
+                                Text(
+                                    text = "${currentMonthString} ${currentYearString}"
+                                )
+                                IconButton(
+                                    onClick = {
+                                        currentMonthAndYear = currentMonthAndYear
+                                            .atZone(ZoneId.systemDefault()) // Convert to ZonedDateTime
+                                            .plusMonths(1)                // Subtract one month
+                                            .toInstant()
+
+                                        currentMonthString = currentMonthAndYear
+                                            .atZone(ZoneId.systemDefault())
+                                            .format(monthFormatter)
+
+                                        currentYearString = currentMonthAndYear
+                                            .atZone(ZoneId.systemDefault())
+                                            .format(yearFormatter)
+                                    },
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                        contentDescription = "Forward"
+                                    )
+                                
+                            }
+                        }
+
                         NavHost(
                             navController = navController,
                             startDestination = Navigation.Budget.name,
@@ -90,7 +171,10 @@ class MainActivity : ComponentActivity() {
 //                        }
                             composable(route = Navigation.Budget.name) {
                                 BudgetScreen (
-                                    db = db
+                                    db = db,
+                                    currentMonthAndYear = currentMonthAndYear,
+                                    monthFormatter = monthFormatter,
+                                    yearFormatter = yearFormatter
                                 )
                             }
 

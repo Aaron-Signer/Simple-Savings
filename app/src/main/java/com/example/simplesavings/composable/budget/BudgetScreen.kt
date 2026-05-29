@@ -54,17 +54,16 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun BudgetScreen (
     modifier: Modifier = Modifier,
-    db: AppDatabase
+    db: AppDatabase,
+    currentMonthAndYear: Instant,
+    monthFormatter: DateTimeFormatter,
+    yearFormatter: DateTimeFormatter
 ) {
 
-    val yearFormatter = DateTimeFormatter.ofPattern("YYYY", Locale.getDefault())
-    var currentMonthAndYear by remember {mutableStateOf(Instant.now())}
     var currentYearString = currentMonthAndYear
         .atZone(ZoneId.systemDefault())
         .format(yearFormatter)
 
-    val monthFormatter = DateTimeFormatter.ofPattern("MMMM", Locale.getDefault())
-//    var currentMonth by remember {mutableStateOf(Instant.now())}
     var currentMonthString = currentMonthAndYear
         .atZone(ZoneId.systemDefault())
         .format(monthFormatter)
@@ -120,64 +119,11 @@ fun BudgetScreen (
             currentMonthString,
             currentYearString)
     }
-
-    Column(modifier = modifier
+    Column(modifier = Modifier
         .padding(10.dp, 15.dp)
         .verticalScroll(rememberScrollState()) ) {
-        Row (
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            IconButton(
-                onClick = {
-                    currentMonthAndYear = currentMonthAndYear
-                        .atZone(ZoneId.systemDefault()) // Convert to ZonedDateTime
-                        .minusMonths(1)                // Subtract one month
-                        .toInstant()
-
-                    currentMonthString = currentMonthAndYear
-                        .atZone(ZoneId.systemDefault())
-                        .format(monthFormatter)
-
-                    currentYearString = currentMonthAndYear
-                        .atZone(ZoneId.systemDefault())
-                        .format(yearFormatter)
-                },
-            ) {
-                Icon (
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Backward"
-                )
-            }
-            Text (
-                text = "${currentMonthString} ${currentYearString}"
-            )
-            IconButton(
-                onClick = {
-                    currentMonthAndYear = currentMonthAndYear
-                        .atZone(ZoneId.systemDefault()) // Convert to ZonedDateTime
-                        .plusMonths(1)                // Subtract one month
-                        .toInstant()
-
-                    currentMonthString = currentMonthAndYear
-                        .atZone(ZoneId.systemDefault())
-                        .format(monthFormatter)
-
-                    currentYearString = currentMonthAndYear
-                        .atZone(ZoneId.systemDefault())
-                        .format(yearFormatter)
-                },
-            ) {
-                Icon (
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = "Forward"
-                )
-            }
-        }
-
         if (groupList.isEmpty()) {
-            Row (
+            Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -376,24 +322,25 @@ fun BudgetScreen (
                 }
             }
         }
-        Box (
+        Box(
             modifier = modifier
                 .fillMaxSize()
                 .zIndex(100F)
                 .padding(bottom = 50.dp),
             contentAlignment = Alignment.BottomEnd,
         ) {
-            Button (
+            Button(
                 onClick = {
                     showCard = true
                 }
             ) {
-                Text (
+                Text(
                     text = "Add Group"
                 )
             }
         }
     }
+
 }
 
 suspend fun copyGroupsAndCategories(
