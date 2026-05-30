@@ -68,34 +68,13 @@ fun BudgetScreen (
         .atZone(ZoneId.systemDefault())
         .format(monthFormatter)
 
-    val typeColumnWidth = .15F
-    val remainingColumnWidth = .25F
+    val categoryColumnWidth = .3F
+    val plannedColumnWidth = .2F
+    val spentColumnWidth = .2F
+    val remainingColumnWidth = .2F
+    val typeColumnWidth = .1F
+
     val groupList by db.groupDao().getAll(currentMonthString, currentYearString).collectAsState(initial = emptyList())
-
-    for (group in groupList) {
-        val categoryListForGroup by db.categoryDao().getCategoriesForGroup(group.uid).collectAsState(initial = emptyList())
-
-        var groupPlannedTotal = 0.0
-        var groupSpentTotal = 0.0
-
-        for (category in categoryListForGroup) {
-            val transactionListForCategory by db.transactionDao().getTransactionsForCategory(category.uid).collectAsState(initial = emptyList())
-
-            for (transaction in transactionListForCategory) {
-                category.spent -= transaction.debit
-                category.spent += transaction.credit
-            }
-
-            groupPlannedTotal += category.planned
-            groupSpentTotal += category.spent
-        }
-
-        group.plannedTotal = groupPlannedTotal
-        group.spentTotal = groupSpentTotal
-
-//        if (group.uid == 1 && group.spentTotal > 12.2)
-//            print("Larger")
-    }
 
     var showCard by remember { mutableStateOf( false) }
     var showCreateCategoryForm by remember { mutableStateOf( false) }
@@ -153,7 +132,6 @@ fun BudgetScreen (
                     ),
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(20.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -202,19 +180,19 @@ fun BudgetScreen (
                         ) {
                         Text(
                             text = "",
-                            Modifier.weight(.2F)
+                            Modifier.weight(categoryColumnWidth)
                         )
                         Text(
                             text = "$${"%.2f".format(group.plannedTotal)}",
                             Modifier
-                                .weight(.2F)
+                                .weight(plannedColumnWidth)
                                 .padding(end = 5.dp),
                             textAlign = TextAlign.End
                         )
                         Text(
                             text = "$${"%.2f".format(group.spentTotal)}",
                             Modifier
-                                .weight(.2F)
+                                .weight(spentColumnWidth)
                                 .padding(end = 5.dp),
                             textAlign = TextAlign.End
                         )
@@ -234,21 +212,21 @@ fun BudgetScreen (
                     ) {
                         Text(
                             text = "Category",
-                            modifier = Modifier.weight(.2F),
+                            modifier = Modifier.weight(categoryColumnWidth),
                             textAlign = TextAlign.Center
                         )
                         Text(
                             text = "Planned",
-                            Modifier.weight(.2F),
+                            Modifier.weight(plannedColumnWidth),
                             textAlign = TextAlign.Center
                         )
                         Text(
                             text = "Spent",
-                            Modifier.weight(.2F),
+                            Modifier.weight(spentColumnWidth),
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "Remaining",
+                            text = "Remng",
                             Modifier.weight(remainingColumnWidth),
                             textAlign = TextAlign.Center
                         )
@@ -273,12 +251,12 @@ fun BudgetScreen (
                                 ) {
                                 Text(
                                     text = category.name,
-                                    Modifier.weight(.2F),
+                                    Modifier.weight(categoryColumnWidth),
                                 )
                                 Text(
                                     text = "$${"%.2f".format(category.planned)}",
                                     Modifier
-                                        .weight(.2F)
+                                        .weight(plannedColumnWidth)
                                         .padding(end = 5.dp),
                                     textAlign = TextAlign.End
                                 )
@@ -286,7 +264,7 @@ fun BudgetScreen (
                                 Text(
                                     text = "$${"%.2f".format(category.spent)}",
                                     Modifier
-                                        .weight(.2F)
+                                        .weight(spentColumnWidth)
                                         .padding(end = 5.dp),
                                     textAlign = TextAlign.End,
                                     color = if (percentageSpent in 0.0.. .5)
@@ -311,7 +289,8 @@ fun BudgetScreen (
                                 )
                                 Text(
                                     text = if (category.spendingType == SpendingType.FIXED) "FXD" else "VAR",
-                                    Modifier.weight(typeColumnWidth)
+                                    Modifier.weight(typeColumnWidth),
+                                    textAlign = TextAlign.Center
                                 )
                             }
                             HorizontalDivider(thickness = 1.dp)

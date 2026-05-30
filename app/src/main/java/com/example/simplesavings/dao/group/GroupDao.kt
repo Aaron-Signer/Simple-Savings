@@ -10,7 +10,20 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface GroupDao {
-    @Query("SELECT * FROM groups where month = :month and year = :year")
+    @Query("select g.uid,\n" +
+            "g.name,\n" +
+            "sum(z.planned) as plannedTotal,\n" +
+            " sum(z.credit) as spentTotal,\n" +
+            " g.month,\n" +
+            " g.year\n" +
+            "from `groups` as g\n" +
+            "join (select *\n" +
+            "from category as c\n" +
+            "join transactions as t\n" +
+            "on c.uid = t.categoryUid) z\n" +
+            "on g.uid = z.groupUid\n" +
+            "group by g.uid\n" +
+            "having month = :month and year = :year")
     fun getAll(month: String, year: String): Flow<List<Group>>
 
     @Insert

@@ -3,5 +3,6 @@ package com.example.simplesavings.enums
 enum class Navigation {
     Analytics,
     Budget,
-    Transactions
+    Transactions,
+    Income
 }

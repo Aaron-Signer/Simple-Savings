@@ -37,6 +37,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.simplesavings.composable.budget.BudgetScreen
+import com.example.simplesavings.composable.income.IncomeScreen
 import com.example.simplesavings.composable.transactions.TransactionsView
 import com.example.simplesavings.config.database.AppDatabase
 import com.example.simplesavings.enums.Navigation
@@ -73,11 +74,20 @@ class MainActivity : ComponentActivity() {
                         ) {
                             Button (
                                 onClick = {
+                                    navController.navigate(Navigation.Income.name)
+                                }
+                            ) {
+                                Text (
+                                    text = "Incm"
+                                )
+                            }
+                            Button (
+                                onClick = {
                                     navController.navigate(Navigation.Budget.name)
                                 }
                             ) {
                                 Text (
-                                    text = "Budget"
+                                    text = "Bdgt"
                                 )
                             }
                             Button (
@@ -86,7 +96,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             ) {
                                 Text (
-                                    text = "Transactions"
+                                    text = "Trans"
                                 )
                             }
                         }
@@ -169,6 +179,11 @@ class MainActivity : ComponentActivity() {
 //                                options = DataSource.flavors.map { id -> context.resources.getString(id) }
 //                            )
 //                        }
+                            composable(route = Navigation.Income.name) {
+                                IncomeScreen (
+                                    db = db
+                                )
+                            }
                             composable(route = Navigation.Budget.name) {
                                 BudgetScreen (
                                     db = db,
