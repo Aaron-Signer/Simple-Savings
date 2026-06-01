@@ -5,6 +5,8 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -55,10 +57,12 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun TransactionsView (
     modifier: Modifier = Modifier,
-    db: AppDatabase
+    db: AppDatabase,
+    currentMonthString: String,
+    currentYearString: String
 ) {
     val transactionListFlow = remember(db) { db.transactionDao().getTransactionsWithNames() }
-    val categoryListFlow = remember(db) { db.categoryDao().getAll() }
+    val categoryListFlow = remember(db) { db.categoryDao().getCategoriesForMonthAndYear(currentMonthString, currentYearString) }
 
     val transactionList by transactionListFlow.collectAsState(initial = emptyList())
     val categoryList by categoryListFlow.collectAsState(initial = emptyList())
@@ -80,13 +84,9 @@ fun TransactionsView (
 //                            val fileData = inputStream.readBytes()
 
                             print("here")
-                            // Switch back to Main thread if you need to update UI state
-                            withContext(Dispatchers.Main) {
-                                // Update your database or UI here
-                                for (transaction in transactionList) {
-//                                    transaction.dateTime = Instant.now()
-                                    db.transactionDao().insert(transaction)
-                                }
+                            // Update your database or UI here
+                            for (transaction in transactionList) {
+                                db.transactionDao().insert(transaction)
                             }
                         }
                     } catch (e: Exception) {
@@ -104,7 +104,9 @@ fun TransactionsView (
         CreateTransactionForm (
             Modifier,
             db = db,
-            { showCreateTransactionForm = false })
+            { showCreateTransactionForm = false },
+            currentMonthString,
+            currentYearString)
     }
 
     Box(
@@ -169,7 +171,11 @@ fun TransactionCard(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 5.dp, vertical = 5.dp)
+            .padding(horizontal = 5.dp, vertical = 5.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = Color(0xFF664B47), // Set your background color here
+            contentColor = Color.White         // Optional: Set default text color
+        ),
     ) {
 
         Column(
@@ -196,26 +202,23 @@ fun TransactionCard(
                     text = "+${transaction.debit}",
                     color = Color.Green,
                     modifier = Modifier.padding(bottom = 5.dp),
-                    fontSize = 22.sp
+                    fontSize = 22.sp,
                 )
             } else if (transaction.credit != 0.0) {
                 Text(
                     text = "-${transaction.credit}",
-                    color = Color.Red,
+                    color = Color(0xFFFF3D3D),
                     modifier = Modifier.padding(bottom = 5.dp),
                     fontSize = 22.sp
                 )
             }
 
             Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
-                Button(
-                    onClick = { mExpanded = true }
-                ) {
-                    Text(
-                        text = "Category: ${if (transaction.categoryName == "") "None" else transaction.categoryName}",
-                        color = if (transaction.categoryName == "") Color.Red else Color.Green
-                    )
-                }
+                Text(
+                    text = "Category: ${if (transaction.categoryName == "") "None" else transaction.categoryName}",
+                    color = if (transaction.categoryName == "") Color.Red else Color(0xFF79D479),
+                    modifier = Modifier.clickable { mExpanded = true }
+                )
                 DropdownMenu(
                     expanded = mExpanded,
                     onDismissRequest = { mExpanded = false },

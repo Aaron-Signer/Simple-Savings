@@ -1,9 +1,11 @@
 package com.example.simplesavings
 
+import android.R
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
@@ -53,7 +56,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SimpleSavingsTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(
+                    containerColor = Color(0xFF272727),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFF272727))
+                ) { innerPadding ->
                     val navController= rememberNavController()
 
                     val context = LocalContext.current
@@ -63,11 +71,10 @@ class MainActivity : ComponentActivity() {
                             context,
                             AppDatabase::class.java, "group"
                         )
-                            .fallbackToDestructiveMigration(true)
                             .build()
                     }
 
-                    Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                    Column(modifier = Modifier.fillMaxSize().padding(innerPadding).background(Color(0xFF272727))) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -137,11 +144,13 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Backward"
+                                        contentDescription = "Backward",
+                                        tint = Color.White
                                     )
                                 }
                                 Text(
-                                    text = "${currentMonthString} ${currentYearString}"
+                                    text = "${currentMonthString} ${currentYearString}",
+                                    color = Color.White
                                 )
                                 IconButton(
                                     onClick = {
@@ -161,7 +170,8 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                        contentDescription = "Forward"
+                                        contentDescription = "Forward",
+                                        tint = Color.White
                                     )
                                 
                             }
@@ -196,7 +206,9 @@ class MainActivity : ComponentActivity() {
                             composable(route = Navigation.Transactions.name) {
                                 TransactionsView (
                                     modifier = Modifier.fillMaxSize(),
-                                    db = db
+                                    db = db,
+                                    currentMonthString,
+                                    currentYearString
                                 )
                             }
                         }

@@ -53,148 +53,148 @@ fun CreateTransactionForm(
     currentMonthString: String,
     currentYearString: String
 ) {
-    val scope = rememberCoroutineScope()
-    var incomeName by remember {mutableStateOf("")}
-    var incomeAmount by remember { mutableStateOf("")}
-
-    val focusManager = LocalFocusManager.current // 1. Get the focus manager
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .zIndex(100F)
-            .pointerInput(Unit) {
-                detectTapGestures(onTap = {
-                    focusManager.clearFocus() // 3. Clear focus to hide keyboard
-                })
-            },
-        contentAlignment = Alignment.TopCenter,
-
-        ) {
-        ElevatedCard(
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 6.dp
-            ),
-            modifier = Modifier
-                .padding(10.dp)
-                .border(1.dp, Color.White)
-        ) {
-            Text(
-                text = "Transaction Form",
-                Modifier.padding(10.dp)
-            )
-            TextField(
-                value = businessName,
-                onValueChange = { businessName = it },
-                label = { Text("Business Name")},
-                modifier = Modifier
-                    .fillMaxWidth(.75F)
-                    .padding(10.dp)
-            )
-
-            TextField (
-                value = debit,
-                onValueChange = { debit = it },
-                label = { Text("Debit")},
-                modifier = Modifier
-                    .fillMaxWidth(.75F)
-                    .padding(10.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            )
-
-            TextField (
-                value = credit,
-                onValueChange = { credit = it },
-                label = { Text("Credit")},
-                modifier = Modifier
-                    .fillMaxWidth(.75F)
-                    .padding(10.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            )
-
-            Text(
-                text = "Category: ${selectedCategory.name}",
-                Modifier.padding(10.dp)
-            )
-
-            Box(
-                modifier = Modifier
-                    .padding(10.dp)
-            ) {
-                Column() {
-
-                    Button(
-                        onClick = {
-                            mExpanded = !mExpanded
-                        }
-                    ) {
-                        Text(
-                            text = "Select Category"
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = mExpanded,
-                        onDismissRequest = { mExpanded = false },
-                    ) {
-                        categoryList.forEach { label ->
-                            DropdownMenuItem(
-                                text = { Text(text = label.name) },
-                                onClick = {
-                                    selectedCategory = label
-                                    mExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-            Row (
-                modifier = Modifier.fillMaxWidth(.75F),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(
-                    enabled = businessName != "" && selectedCategory.uid != -1 && (credit != "" || debit != ""),
-                    onClick = {
-                        val dateTime = Instant.now()
-
-                        scope.launch {
-                            db.transactionDao().insert(
-                                Transaction(
-                                    uid = getTransactionSha256Uid(
-                                        businessName,
-                                        credit.toDouble(),
-                                        dateTime
-                                    ),
-                                    categoryUid = selectedCategory.uid,
-                                    dateTime = dateTime,
-                                    debit = if (debit == "") 0.0 else debit.toDouble(),
-                                    credit = if (credit == "") 0.0 else credit.toDouble(),
-                                    businessName = businessName
-                                )
-                            )
-
-                            businessName = ""
-                            credit = ""
-                            debit = ""
-                            selectedCategory = Category(-1, -1, "")
-                        }
-                    },
-//                enabled = categoryName.value != "" && selectedGroup.uid != -1
-                ) {
-                    Text(
-                        text = "Save Transaction"
-                    )
-                }
-                Button(
-                    onClick = {
-                        onDismiss()
-                    }
-                ) {
-                    Text(
-                        text = "Close"
-                    )
-                }
-            }
-        }
-    }
+//    val scope = rememberCoroutineScope()
+//    var incomeName by remember {mutableStateOf("")}
+//    var incomeAmount by remember { mutableStateOf("")}
+//
+//    val focusManager = LocalFocusManager.current // 1. Get the focus manager
+//
+//    Box(
+//        modifier = modifier
+//            .fillMaxSize()
+//            .zIndex(100F)
+//            .pointerInput(Unit) {
+//                detectTapGestures(onTap = {
+//                    focusManager.clearFocus() // 3. Clear focus to hide keyboard
+//                })
+//            },
+//        contentAlignment = Alignment.TopCenter,
+//
+//        ) {
+//        ElevatedCard(
+//            elevation = CardDefaults.cardElevation(
+//                defaultElevation = 6.dp
+//            ),
+//            modifier = Modifier
+//                .padding(10.dp)
+//                .border(1.dp, Color.White)
+//        ) {
+//            Text(
+//                text = "Transaction Form",
+//                Modifier.padding(10.dp)
+//            )
+//            TextField(
+//                value = businessName,
+//                onValueChange = { businessName = it },
+//                label = { Text("Business Name")},
+//                modifier = Modifier
+//                    .fillMaxWidth(.75F)
+//                    .padding(10.dp)
+//            )
+//
+//            TextField (
+//                value = debit,
+//                onValueChange = { debit = it },
+//                label = { Text("Debit")},
+//                modifier = Modifier
+//                    .fillMaxWidth(.75F)
+//                    .padding(10.dp),
+//                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+//            )
+//
+//            TextField (
+//                value = credit,
+//                onValueChange = { credit = it },
+//                label = { Text("Credit")},
+//                modifier = Modifier
+//                    .fillMaxWidth(.75F)
+//                    .padding(10.dp),
+//                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+//            )
+//
+//            Text(
+//                text = "Category: ${selectedCategory.name}",
+//                Modifier.padding(10.dp)
+//            )
+//
+//            Box(
+//                modifier = Modifier
+//                    .padding(10.dp)
+//            ) {
+//                Column() {
+//
+//                    Button(
+//                        onClick = {
+//                            mExpanded = !mExpanded
+//                        }
+//                    ) {
+//                        Text(
+//                            text = "Select Category"
+//                        )
+//                    }
+//                    DropdownMenu(
+//                        expanded = mExpanded,
+//                        onDismissRequest = { mExpanded = false },
+//                    ) {
+//                        categoryList.forEach { label ->
+//                            DropdownMenuItem(
+//                                text = { Text(text = label.name) },
+//                                onClick = {
+//                                    selectedCategory = label
+//                                    mExpanded = false
+//                                }
+//                            )
+//                        }
+//                    }
+//                }
+//            }
+//            Row (
+//                modifier = Modifier.fillMaxWidth(.75F),
+//                horizontalArrangement = Arrangement.SpaceEvenly
+//            ) {
+//                Button(
+//                    enabled = businessName != "" && selectedCategory.uid != -1 && (credit != "" || debit != ""),
+//                    onClick = {
+//                        val dateTime = Instant.now()
+//
+//                        scope.launch {
+//                            db.transactionDao().insert(
+//                                Transaction(
+//                                    uid = getTransactionSha256Uid(
+//                                        businessName,
+//                                        credit.toDouble(),
+//                                        dateTime
+//                                    ),
+//                                    categoryUid = selectedCategory.uid,
+//                                    dateTime = dateTime,
+//                                    debit = if (debit == "") 0.0 else debit.toDouble(),
+//                                    credit = if (credit == "") 0.0 else credit.toDouble(),
+//                                    businessName = businessName
+//                                )
+//                            )
+//
+//                            businessName = ""
+//                            credit = ""
+//                            debit = ""
+//                            selectedCategory = Category(-1, -1, "")
+//                        }
+//                    },
+////                enabled = categoryName.value != "" && selectedGroup.uid != -1
+//                ) {
+//                    Text(
+//                        text = "Save Transaction"
+//                    )
+//                }
+//                Button(
+//                    onClick = {
+//                        onDismiss()
+//                    }
+//                ) {
+//                    Text(
+//                        text = "Close"
+//                    )
+//                }
+//            }
+//        }
+//    }
 }

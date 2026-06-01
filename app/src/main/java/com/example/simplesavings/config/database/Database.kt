@@ -20,7 +20,8 @@ import com.example.simplesavings.util.db.DateConverters
         Category::class,
         Transaction::class,
         Income::class],
-    version = 21)
+    version = 24,
+    exportSchema = false)
 @TypeConverters(DateConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun groupDao(): GroupDao

@@ -1,8 +1,10 @@
 package com.example.simplesavings.composable.transactions
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.forEach
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,11 +40,15 @@ import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.window.PopupProperties
 import com.example.simplesavings.model.transaction.Transaction
 import java.time.Instant
 import com.example.simplesavings.util.db.getTransactionSha256Uid
@@ -53,7 +59,9 @@ import com.example.simplesavings.util.db.getTransactionSha256Uid
 fun CreateTransactionForm(
     modifier: Modifier = Modifier,
     db: AppDatabase,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    currentMonthString: String,
+    currentYearString: String
 ) {
     val scope = rememberCoroutineScope()
     var businessName by remember {mutableStateOf("")}
@@ -63,7 +71,8 @@ fun CreateTransactionForm(
     var mExpanded by remember { mutableStateOf(false) }
 
     // Create a string value to store the selected city
-    var selectedCategory by remember { mutableStateOf(Category(-1, -1, "")) }
+    var selectedCategory by remember { mutableStateOf(Category(-1, -1, "", categoryYear = "", categoryMonth = "")) }
+    var selectedCategoryName by remember { mutableStateOf("") }
 
     var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
 
@@ -73,7 +82,8 @@ fun CreateTransactionForm(
     else
         Icons.Filled.KeyboardArrowDown
 
-    val categoryList by db.categoryDao().getAll().collectAsState(initial = emptyList())
+    val categoryList by db.categoryDao().getCategoriesForMonthAndYear(currentMonthString, currentYearString).collectAsState(initial = emptyList())
+    var filteredCategoryList = categoryList.map { it.copy() }
     val focusManager = LocalFocusManager.current // 1. Get the focus manager
 
     Box(
@@ -93,14 +103,22 @@ fun CreateTransactionForm(
                 defaultElevation = 6.dp
             ),
             modifier = Modifier
-                .padding(10.dp)
-                .border(1.dp, Color.White)
+                .padding(10.dp),
+            colors = CardDefaults.elevatedCardColors(
+                containerColor = Color(0xFF272727), // Set your background color here
+                contentColor = Color.White         // Optional: Set default text color
+            ),
         ) {
             Text(
                 text = "Transaction Form",
                 Modifier.padding(10.dp)
             )
             TextField(
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF272727),
+                    unfocusedContainerColor = Color(0xFF272727),
+                    disabledContainerColor = Color(0xFF272727),
+                ),
                 value = businessName,
                 onValueChange = { businessName = it },
                 label = { Text("Business Name")},
@@ -110,6 +128,11 @@ fun CreateTransactionForm(
             )
 
             TextField (
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF272727),
+                    unfocusedContainerColor = Color(0xFF272727),
+                    disabledContainerColor = Color(0xFF272727),
+                ),
                 value = debit,
                 onValueChange = { debit = it },
                 label = { Text("Debit")},
@@ -127,6 +150,11 @@ fun CreateTransactionForm(
                     .fillMaxWidth(.75F)
                     .padding(10.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF272727),
+                    unfocusedContainerColor = Color(0xFF272727),
+                    disabledContainerColor = Color(0xFF272727),
+                ),
             )
 
             Text(
@@ -134,30 +162,46 @@ fun CreateTransactionForm(
                 Modifier.padding(10.dp)
             )
 
-            Box(
-                modifier = Modifier
-                    .padding(10.dp)
-            ) {
-                Column() {
-
-                    Button(
-                        onClick = {
-                            mExpanded = !mExpanded
+            // Replace your "Select Category" Box/Column with this:
+            Box(modifier = Modifier
+                .padding(10.dp)
+                .fillMaxWidth(.75F)) {
+                Column {
+                    TextField(
+                        value = selectedCategoryName,
+                        onValueChange = {
+                            selectedCategoryName = it
+                            mExpanded = true // Show dropdown as user types
+                            filteredCategoryList = categoryList.filter { category ->
+                                category.name.contains(selectedCategoryName)
+                            }
+                        },
+                        label = { Text("Search Category") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF272727),
+                            unfocusedContainerColor = Color(0xFF272727)
+                        ),
+                        trailingIcon = {
+                            IconButton(onClick = { mExpanded = !mExpanded }) {
+                                Icon(icon, contentDescription = "Expand")
+                            }
                         }
-                    ) {
-                        Text(
-                            text = "Select Category"
-                        )
-                    }
+                    )
+
                     DropdownMenu(
-                        expanded = mExpanded,
+                        expanded = mExpanded && categoryList.isNotEmpty(),
                         onDismissRequest = { mExpanded = false },
+                        // Match the width of the TextField
+                        modifier = Modifier.fillMaxWidth(.75F),
+                        properties = PopupProperties(focusable = false),
                     ) {
-                        categoryList.forEach { label ->
+                        filteredCategoryList.forEach { category ->
                             DropdownMenuItem(
-                                text = { Text(text = label.name) },
+                                text = { Text(text = category.name) },
                                 onClick = {
-                                    selectedCategory = label
+                                    selectedCategory = category
+                                    selectedCategoryName = selectedCategory.name
                                     mExpanded = false
                                 }
                             )
@@ -193,7 +237,7 @@ fun CreateTransactionForm(
                             businessName = ""
                             credit = ""
                             debit = ""
-                            selectedCategory = Category(-1, -1, "")
+                            selectedCategory = Category(-1, -1, "", categoryYear = "", categoryMonth = "")
                         }
                     },
 //                enabled = categoryName.value != "" && selectedGroup.uid != -1

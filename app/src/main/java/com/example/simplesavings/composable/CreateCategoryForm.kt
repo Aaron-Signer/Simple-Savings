@@ -1,6 +1,7 @@
 package com.example.simplesavings.composable
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -114,7 +115,7 @@ fun CreateCategoryForm(
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 6.dp
             ),
-            modifier = Modifier.border(1.dp, Color.White)
+            modifier = Modifier.border(1.dp, Color.White).background(Color(0xFF272727))
         ) {
             Text(
                 text = "Category Form",
@@ -209,9 +210,14 @@ fun CreateCategoryForm(
                                     selectedGroup.uid,
                                     categoryName,
                                     planned = categoryPlanned.toDouble(),
-                                    spendingType = categorySpendingType
+                                    spendingType = categorySpendingType,
+                                    categoryMonth = currentMonthString,
+                                    categoryYear = currentYearString
                                 )
                             )
+
+                            categoryName = ""
+                            categoryPlanned = ""
                         }
                     },
                     enabled = categoryName != "" && selectedGroup.uid != -1

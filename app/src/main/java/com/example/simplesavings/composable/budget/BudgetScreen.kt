@@ -2,6 +2,7 @@ package com.example.simplesavings.composable.budget
 
 import android.annotation.SuppressLint
 import android.graphics.Paint.Align
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -41,6 +43,7 @@ import java.util.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.room.util.TableInfo
 import com.example.simplesavings.composable.CreateCategoryForm
 import com.example.simplesavings.config.database.AppDatabase
 import com.example.simplesavings.model.category.SpendingType
@@ -100,7 +103,8 @@ fun BudgetScreen (
     }
     Column(modifier = Modifier
         .padding(10.dp, 15.dp)
-        .verticalScroll(rememberScrollState()) ) {
+        .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (groupList.isEmpty()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -124,6 +128,13 @@ fun BudgetScreen (
                 }
             }
         } else {
+
+            SummaryCard(
+                db,
+                currentMonthString,
+                currentYearString
+            )
+
             for (group in groupList) {
 
                 ElevatedCard(
@@ -131,7 +142,11 @@ fun BudgetScreen (
                         defaultElevation = 6.dp
                     ),
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxSize(),
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = Color(0xFF664B47), // Set your background color here
+                        contentColor = Color.White         // Optional: Set default text color
+                    ),
                 ) {
                     Row(
                         modifier = Modifier
@@ -162,6 +177,7 @@ fun BudgetScreen (
                             Button(
                                 onClick = {
                                     scope.launch {
+                                        db.categoryDao().deleteCategoryByGroupUid(group.uid)
                                         db.groupDao().delete(group)
                                     }
                                 }
@@ -272,7 +288,8 @@ fun BudgetScreen (
                                     else if (percentageSpent > .5 && percentageSpent < 1)
                                         Color.Yellow
                                     else
-                                        Color.Red
+                                        Color(0xFFFF3D3D),
+
                                 )
                                 Text(
                                     text = "$${"%.2f".format(category.planned - category.spent)}",
@@ -285,7 +302,7 @@ fun BudgetScreen (
                                     else if (percentageSpent > .5 && percentageSpent < 1)
                                         Color.Yellow
                                     else
-                                        Color.Red
+                                        Color(0xFFFF3D3D)
                                 )
                                 Text(
                                     text = if (category.spendingType == SpendingType.FIXED) "FXD" else "VAR",
@@ -320,6 +337,81 @@ fun BudgetScreen (
         }
     }
 
+}
+
+@Composable
+fun SummaryCard(
+    db: AppDatabase,
+    currentMonthString: String,
+    currentYearString: String
+) {
+
+    val projectedSavings by db.groupDao().getBudgetSummary(currentMonthString, currentYearString).collectAsState(initial = 0.0)
+
+    var a = 0.0
+    ElevatedCard(
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 6.dp
+        ),
+        modifier = Modifier
+            .fillMaxSize(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = Color(0xFF664B47), // Set your background color here
+            contentColor = Color.White         // Optional: Set default text color
+        ),
+    ) {
+            Column (
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+                modifier = Modifier.fillMaxWidth().padding(5.dp)
+            ) {
+                Row (
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Monthly Income"
+                    )
+                    Text(
+                        text = "$6,134.70"
+                    )
+                }
+
+                HorizontalDivider(
+                    color = Color.Cyan,
+                    thickness = 1.dp
+                )
+
+                Row (
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Projected Savings"
+                    )
+                    Text(
+                        text = "$${"%.2f".format(6134.70 - projectedSavings)}"
+                    )
+                }
+
+                HorizontalDivider(
+                    color = Color.Cyan,
+                    thickness = 1.dp
+                )
+
+                Row (
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Projected New Savings"
+                    )
+                    Text(
+                        text = "$${"%.2f".format(14606.65 + (6134.70 - projectedSavings))}"
+                    )
+                }
+
+        }
+    }
 }
 
 suspend fun copyGroupsAndCategories(
