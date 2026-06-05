@@ -4,5 +4,6 @@ enum class Navigation {
     Analytics,
     Budget,
     Transactions,
-    Income
+    Income,
+    TransactionSummary
 }

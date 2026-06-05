@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import com.example.simplesavings.model.transaction.Transaction
+import com.example.simplesavings.model.transaction.TransactionSummary
 import com.example.simplesavings.model.transaction.TransactionWithCategory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -13,6 +14,34 @@ import kotlinx.coroutines.flow.map
 abstract class TransactionDao {
     @Query("SELECT * FROM transactions")
     abstract fun getAll(): Flow<List<Transaction>>
+
+    @Query("""
+    SELECT totalDebit, day, year, month 
+    FROM (
+        SELECT 
+            SUM(credit) as totalDebit,
+            strftime('%d', dateTime / 1000, 'unixepoch') as day,
+            strftime('%Y', dateTime / 1000, 'unixepoch') as year,
+            CASE strftime('%m', dateTime / 1000, 'unixepoch')
+                WHEN '01' THEN 'January'
+                WHEN '02' THEN 'February'
+                WHEN '03' THEN 'March'
+                WHEN '04' THEN 'April'
+                WHEN '05' THEN 'May'
+                WHEN '06' THEN 'June'
+                WHEN '07' THEN 'July'
+                WHEN '08' THEN 'August'
+                WHEN '09' THEN 'September'
+                WHEN '10' THEN 'October'
+                WHEN '11' THEN 'November'
+                WHEN '12' THEN 'December'
+            END AS month
+        FROM transactions
+        GROUP BY year, month, day
+    )
+    WHERE month = :month AND year = :year
+""")
+    abstract fun getTransactionSummaryForMonth(year: String, month: String): Flow<List<TransactionSummary>>
 
     @Insert
     abstract suspend fun insert(transaction: Transaction)

@@ -40,11 +40,19 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.simplesavings.composable.budget.BudgetScreen
+//import com.example.simplesavings.composable.dataVisualization.BottomAxisLabelKey
+import com.example.simplesavings.composable.dataVisualization.ComposeRockMetalRatios
+import com.example.simplesavings.composable.dataVisualization.PreviewBox
+import com.example.simplesavings.composable.dataVisualization.SampleChart2
+//import com.example.simplesavings.composable.dataVisualization.data
 import com.example.simplesavings.composable.income.IncomeScreen
 import com.example.simplesavings.composable.transactions.TransactionsView
 import com.example.simplesavings.config.database.AppDatabase
 import com.example.simplesavings.enums.Navigation
 import com.example.simplesavings.ui.theme.SimpleSavingsTheme
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.columnModel
+import kotlinx.coroutines.runBlocking
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -79,6 +87,15 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxWidth().padding(10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
+                            Button (
+                                onClick = {
+                                    navController.navigate(Navigation.TransactionSummary.name)
+                                }
+                            ) {
+                                Text (
+                                    text = "Trans Sum"
+                                )
+                            }
                             Button (
                                 onClick = {
                                     navController.navigate(Navigation.Income.name)
@@ -173,7 +190,7 @@ class MainActivity : ComponentActivity() {
                                         contentDescription = "Forward",
                                         tint = Color.White
                                     )
-                                
+
                             }
                         }
 
@@ -189,6 +206,14 @@ class MainActivity : ComponentActivity() {
 //                                options = DataSource.flavors.map { id -> context.resources.getString(id) }
 //                            )
 //                        }
+                            composable(route = Navigation.TransactionSummary.name) {
+                                SampleChart2 (
+                                    modifier = Modifier.fillMaxSize(),
+                                    db = db,
+                                    currentMonthString,
+                                    currentYearString
+                                )
+                            }
                             composable(route = Navigation.Income.name) {
                                 IncomeScreen (
                                     db = db

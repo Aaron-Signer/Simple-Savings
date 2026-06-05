@@ -12,6 +12,15 @@ android {
         }
     }
 
+    signingConfigs {
+        create("sharedDebug") {
+            storeFile = file("debug.keystore") // Looks for it in the 'app' folder
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.example.simplesavings"
         minSdk = 36
@@ -29,6 +38,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("sharedDebug")
         }
     }
     compileOptions {
@@ -52,6 +64,7 @@ dependencies {
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.media3.common.ktx)
     implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -60,7 +73,11 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-
+    implementation(libs.vico.compose)
+    implementation(libs.vico.compose.m3)
+    implementation(libs.vico.views)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.datetime)
     val room_version = "2.8.4"
 
     implementation("androidx.room:room-runtime:$room_version")
