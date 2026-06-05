@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AddCard
+import androidx.compose.material.icons.outlined.Balance
+import androidx.compose.material.icons.outlined.MonetizationOn
 import androidx.compose.material.icons.outlined.Summarize
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -17,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -47,28 +51,36 @@ fun NavigationRow(navController: NavHostController) {
                 modifier = Modifier.weight(1F),
                 navController = navController,
                 currentRoute = currentRoute,
-                Navigation.TransactionSummary
+                Navigation.TransactionSummary,
+                name = "Analytics",
+                icon = Icons.Outlined.Summarize
             )
 
             NavigationItem(
                 modifier = Modifier.weight(1F),
                 navController = navController,
                 currentRoute = currentRoute,
-                Navigation.Income
+                Navigation.Income,
+                name = "Income",
+                icon = Icons.Outlined.MonetizationOn
             )
 
             NavigationItem(
                 modifier = Modifier.weight(1F),
                 navController = navController,
                 currentRoute = currentRoute,
-                Navigation.Budget
+                Navigation.Budget,
+                name = "Budget",
+                icon = Icons.Outlined.Balance
             )
 
             NavigationItem(
                 modifier = Modifier.weight(1F),
                 navController = navController,
                 currentRoute = currentRoute,
-                Navigation.Transactions
+                Navigation.Transactions,
+                name = "Transactions",
+                icon = Icons.Outlined.AddCard
             )
         }
     }
@@ -79,7 +91,9 @@ fun NavigationItem(
     modifier: Modifier,
     navController: NavHostController,
     currentRoute: String?,
-    navigation: Navigation
+    navigation: Navigation,
+    name: String,
+    icon: ImageVector
 ) {
     Column(
         modifier = modifier
@@ -89,12 +103,12 @@ fun NavigationItem(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            imageVector = Icons.Outlined.Summarize,
+            imageVector = icon,
             contentDescription = "Backward",
             tint = getNavigationElementColor(currentRoute, navigation),
         )
         Text(
-            text = "Summary",
+            text = name,
             color = getNavigationElementColor(currentRoute, navigation),
             fontSize = 10.sp
         )
