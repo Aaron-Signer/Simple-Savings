@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,11 +20,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.AttachMoney
+import androidx.compose.material.icons.outlined.Money
+import androidx.compose.material.icons.outlined.Summarize
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,16 +42,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.simplesavings.composable.budget.BudgetScreen
 //import com.example.simplesavings.composable.dataVisualization.BottomAxisLabelKey
-import com.example.simplesavings.composable.dataVisualization.ComposeRockMetalRatios
-import com.example.simplesavings.composable.dataVisualization.PreviewBox
 import com.example.simplesavings.composable.dataVisualization.SampleChart2
 //import com.example.simplesavings.composable.dataVisualization.data
 import com.example.simplesavings.composable.income.IncomeScreen
@@ -83,47 +93,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     Column(modifier = Modifier.fillMaxSize().padding(innerPadding).background(Color(0xFF272727))) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Button (
-                                onClick = {
-                                    navController.navigate(Navigation.TransactionSummary.name)
-                                }
-                            ) {
-                                Text (
-                                    text = "Trans Sum"
-                                )
-                            }
-                            Button (
-                                onClick = {
-                                    navController.navigate(Navigation.Income.name)
-                                }
-                            ) {
-                                Text (
-                                    text = "Incm"
-                                )
-                            }
-                            Button (
-                                onClick = {
-                                    navController.navigate(Navigation.Budget.name)
-                                }
-                            ) {
-                                Text (
-                                    text = "Bdgt"
-                                )
-                            }
-                            Button (
-                                onClick = {
-                                    navController.navigate(Navigation.Transactions.name)
-                                }
-                            ) {
-                                Text (
-                                    text = "Trans"
-                                )
-                            }
-                        }
+
 
                         val yearFormatter = DateTimeFormatter.ofPattern("YYYY", Locale.getDefault())
                         var currentMonthAndYear by remember {mutableStateOf(Instant.now())}
@@ -237,59 +207,129 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
+                        
+                        NavigationRow(
+                            navController = navController
+                        )
                     }
-//                    val context = LocalContext.current
-//
-//                    val db = remember {
-//                        Room.databaseBuilder(
-//                            context,
-//                            AppDatabase::class.java, "group"
-//                        )
-//                            .fallbackToDestructiveMigration(true)
-//                            .build()
-//                    }
-//
-//                    var showTransaction by remember { mutableStateOf( false) }
-//
-//                    Row(
-//                        modifier = Modifier.fillMaxSize().padding(top = 50.dp, end = 20.dp, start = 20.dp),
-//                        horizontalArrangement = Arrangement.SpaceBetween
-//                    ) {
-//                        Button (
-//                            onClick = {
-//                                showTransaction = false
-//                            }
-//                        ) {
-//                            Text (
-//                                text = "Budget"
-//                            )
-//                        }
-//                        Button (
-//                            onClick = {
-//                                showTransaction = true
-//                            }
-//                        ) {
-//                            Text (
-//                                text = "Transactions"
-//                            )
-//                        }
-//                    }
-//
-//                    if (showTransaction) {
-//                        TransactionsView(
-//                            modifier = Modifier,
-//                            db
-//                        )
-//                    }
-//                    else if (!showTransaction) {
-//                        BudgetScreen (
-//                            modifier = Modifier.padding(innerPadding),
-//                            db
-//                        )
-//                    }
                 }
             }
         }
     }
 }
 
+// TODO: Extract this out to it's own file and then make a reusable composable for each nav item in the row
+@Composable
+fun NavigationRow(navController: NavHostController) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    // Extract the route string
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    ElevatedCard(
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 6.dp
+        ),
+        modifier = Modifier
+            .fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = Color(0xFF664B47), // Set your background color here
+            contentColor = Color.White         // Optional: Set default text color
+        ),
+    ) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(5.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        val navigationTransactionSummary: Navigation = Navigation.TransactionSummary
+        Column(
+            modifier = Modifier
+                .clickable {
+                    navController.navigate(navigationTransactionSummary.name)
+                }
+                .weight(1F),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Summarize,
+                contentDescription = "Backward",
+                tint = getNavigationElementColor(currentRoute, navigationTransactionSummary),
+            )
+            Text(
+                text = "Summary",
+                color = getNavigationElementColor(currentRoute, navigationTransactionSummary),
+                fontSize = 10.sp
+            )
+        }
+
+        val navigationIncome: Navigation = Navigation.Income
+        Column(
+            modifier = Modifier.clickable {
+                navController.navigate(navigationIncome.name)
+            }
+                .weight(1F),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.AccountBalance,
+                contentDescription = "Backward",
+                tint = getNavigationElementColor(currentRoute, navigationIncome),
+            )
+            Text(
+                text = "Income",
+                color = getNavigationElementColor(currentRoute, navigationIncome),
+                fontSize = 10.sp
+            )
+        }
+
+        val navigationBudget: Navigation = Navigation.Budget
+        Column(
+            modifier = Modifier.clickable {
+                navController.navigate(navigationBudget.name)
+            }
+                .weight(1F),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.AttachMoney,
+                contentDescription = "Backward",
+                tint = getNavigationElementColor(currentRoute, navigationBudget),
+            )
+            Text(
+                text = "Budget",
+                color = getNavigationElementColor(currentRoute, navigationBudget),
+                fontSize = 10.sp
+            )
+        }
+
+        val navigationTransaction: Navigation = Navigation.Transactions
+        Column(
+            modifier = Modifier.clickable {
+                navController.navigate(navigationTransaction.name)
+            }
+                .weight(1F),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.AccessTime,
+                contentDescription = "Backward",
+                tint = getNavigationElementColor(currentRoute, navigationTransaction),
+            )
+            Text(
+                text = "Transactions",
+                color = getNavigationElementColor(currentRoute, navigationTransaction),
+                fontSize = 10.sp
+            )
+        }
+    }
+    }
+}
+
+fun getNavigationElementColor(
+    currentRoute: String?,
+    navigation: Navigation
+): Color {
+    if (currentRoute == navigation.name)
+        return Color.Cyan
+    else
+        return Color.White
+}
