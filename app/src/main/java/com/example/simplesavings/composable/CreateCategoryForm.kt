@@ -158,6 +158,13 @@ fun CreateCategoryForm(
                     )
                     Text("Variable")
                 }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(
+                        selected = categorySpendingType == SpendingType.RECURRING,
+                        onClick = { categorySpendingType = SpendingType.RECURRING }
+                    )
+                    Text("Recurring")
+                }
             }
 
             Text(

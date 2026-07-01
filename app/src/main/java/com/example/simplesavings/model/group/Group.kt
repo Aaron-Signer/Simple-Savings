@@ -12,5 +12,7 @@ data class Group (
     var spentTotal: Double = 0.0,
 
     var month: String = "",
-    var year: String = ""
+    var year: String = "",
+
+    var groupOrder: Int = 0
 )

@@ -10,42 +10,92 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface GroupDao {
-    @Query("select g.uid, " +
-            "               g.name, " +
-            "               sum(z.planned) as plannedTotal, " +
-            "               sum(z.credit) as spentTotal, " +
-            "               g.month, " +
-            "               g.year " +
-            "       from `groups` as g " +
-            "       left join (select *  " +
-            "               from category as c " +
-            "          left join transactions as t " +
-            "               on c.uid = t.categoryUid) z " +
-            "         on g.uid = z.groupUid " +
-            "   group by g.uid " +
-            "     having month = :month and year = :year")
+    @Query("""
+        WITH GroupPlanned AS (
+            -- Sum planned values once per category, grouped by groupUid
+            SELECT groupUid, SUM(planned) as totalPlanned
+            FROM category
+            GROUP BY groupUid
+        )
+        SELECT 
+            g.uid, 
+            g.name, 
+            COALESCE(gp.totalPlanned, 0) as plannedTotal, 
+            SUM(t.credit) as spentTotal,
+            g.month, 
+            g.year,
+            g.groupOrder
+        FROM `groups` g
+        LEFT JOIN GroupPlanned gp ON g.uid = gp.groupUid
+        LEFT JOIN category c ON g.uid = c.groupUid
+        LEFT JOIN transactions t ON c.uid = t.categoryUid
+        WHERE g.month = :month AND g.year = :year
+        GROUP BY g.uid
+        ORDER BY g.groupOrder ASC
+    """)
     fun getAll(month: String, year: String): Flow<List<Group>>
 
-    @Query("SELECT SUM( \n" +
-            "CASE\n" +
-            "WHEN  spendingType = 'FIXED'\n" +
-            "THEN planned \n" +
-            "WHEN spendingType = 'VARIABLE'\n" +
-            " THEN catSpendTotal \n" +
-            " ELSE \n" +
-            " 0 \n" +
-            " END ) AS total_sum\n" +
-            "from \n" +
-            "    (SELECT *,\n" +
-            "                      c.name as catName,\n" +
-            "                      sum(t.credit) as catSpendTotal,\n" +
-            "                      c.categoryMonth\n" +
-            "    FROM category AS c \n" +
-            "    left JOIN transactions AS t \n" +
-            "    ON c.uid = t.categoryUid\n" +
-            "    group by c.uid\n" +
-            "HAVING categoryMonth = :month AND categoryYear = :year)")
+    @androidx.room.Update
+    suspend fun update(group: Group)
+
+    @androidx.room.Update
+    suspend fun updateAll(groups: List<Group>)
+
+    @Query("""
+        SELECT SUM(
+            CASE
+                WHEN spendingType = 'FIXED' THEN planned
+                WHEN spendingType = 'VARIABLE' THEN catSpendTotal
+                ELSE 0
+            END
+        ) AS total_sum
+        FROM (
+            SELECT 
+                c.*,
+                SUM(t.credit) as catSpendTotal
+            FROM category AS c
+            LEFT JOIN transactions AS t ON c.uid = t.categoryUid
+            GROUP BY c.uid
+            HAVING categoryMonth = :month AND categoryYear = :year
+        )
+    """)
     fun getBudgetSummary(month: String, year: String): Flow<Double>
+
+    @Query("""
+        SELECT SUM(
+            CASE
+                WHEN spendingType = 'FIXED' THEN planned
+                WHEN spendingType = 'VARIABLE' THEN 
+                     CASE
+                          WHEN catSpendTotal > planned THEN catSpendTotal
+                          ELSE planned
+                    END
+                WHEN spendingType = 'RECURRING' THEN 
+                     CASE
+                          WHEN catSpendTotal > 0 THEN catSpendTotal
+                          ELSE planned
+                    END
+                ELSE 0
+            END
+        ) AS total_sum
+        FROM (
+            SELECT 
+                c.*,
+                SUM(t.credit) as catSpendTotal
+            FROM category AS c
+            LEFT JOIN transactions AS t ON c.uid = t.categoryUid
+            GROUP BY c.uid
+            HAVING categoryMonth = :month AND categoryYear = :year
+        )
+    """)
+    fun getPlannedProjectedBudget(month: String, year: String): Flow<Double>
+
+    @Query("""
+        select sum (c.planned)
+          from category c
+         where categoryMonth = :month AND categoryYear = :year
+    """)
+    fun getPlannedBudget(month: String, year: String): Flow<Double>
 
     @Insert
     suspend fun insert(group: Group): Long

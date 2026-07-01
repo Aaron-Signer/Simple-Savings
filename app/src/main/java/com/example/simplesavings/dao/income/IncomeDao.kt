@@ -20,6 +20,7 @@ interface IncomeDao {
     @Delete
     suspend fun delete(income: Income)
 
+
 //    @Query(
 //        "SELECT * FROM groups " +
 //                "JOIN category ON groups.uid = category.uid"

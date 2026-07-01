@@ -36,6 +36,7 @@ import com.example.simplesavings.composable.income.IncomeScreen
 import com.example.simplesavings.composable.navigation.NavigationRow
 import com.example.simplesavings.composable.transactions.TransactionsView
 import com.example.simplesavings.config.database.AppDatabase
+import com.example.simplesavings.config.database.MIGRATION_24_25
 import com.example.simplesavings.enums.Navigation
 import com.example.simplesavings.ui.theme.SimpleSavingsTheme
 import java.time.Instant
@@ -64,6 +65,7 @@ class MainActivity : ComponentActivity() {
                             context,
                             AppDatabase::class.java, "group"
                         )
+                            .addMigrations(MIGRATION_24_25)
                             .build()
                     }
 

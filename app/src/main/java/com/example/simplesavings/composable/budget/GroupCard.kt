@@ -6,20 +6,31 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.EditOff
+import androidx.compose.material.icons.outlined.RemoveCircleOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.simplesavings.config.database.AppDatabase
+import com.example.simplesavings.model.category.Category
 import com.example.simplesavings.model.category.SpendingType
 import com.example.simplesavings.model.group.Group
 import kotlinx.coroutines.launch
@@ -39,13 +50,14 @@ fun GroupCard(
 
 ) {
     val scope = rememberCoroutineScope()
+    var isEditMode by remember { mutableStateOf(false) }
 
     ElevatedCard(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 6.dp
         ),
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = modifier
+            .fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(
             containerColor = Color(0xFF664B47), // Set your background color here
             contentColor = Color.White         // Optional: Set default text color
@@ -68,16 +80,32 @@ fun GroupCard(
             Row(
                 horizontalArrangement = Arrangement.End
             ) {
-                Button(
+                IconButton(
+                    onClick = {
+                        isEditMode = !isEditMode
+                    }
+                ) {
+                    Icon(
+                        if (!isEditMode)
+                            Icons.Outlined.Edit
+                            else
+                                Icons.Outlined.EditOff,
+                        contentDescription = "Enable Category Edit Mode",
+                        tint = Color.White
+                    )
+                }
+                IconButton(
                     onClick = {
                         showCreateCategoryForm()
                     }
                 ) {
-                    Text(
-                        text = "Add Cat"
+                    Icon(
+                        Icons.Outlined.AddCircleOutline,
+                        contentDescription = "Add Group",
+                        tint = Color.Green
                     )
                 }
-                Button(
+                IconButton(
                     onClick = {
                         scope.launch {
                             db.categoryDao().deleteCategoryByGroupUid(group.uid)
@@ -85,8 +113,10 @@ fun GroupCard(
                         }
                     }
                 ) {
-                    Text(
-                        text = "Del"
+                    Icon(
+                        Icons.Outlined.RemoveCircleOutline,
+                        contentDescription = "Remove Group",
+                        tint = Color.Red
                     )
                 }
             }
@@ -186,13 +216,7 @@ fun GroupCard(
                             .weight(spentColumnWidth)
                             .padding(end = 5.dp),
                         textAlign = TextAlign.End,
-                        color = if (percentageSpent in 0.0.. .5)
-                            Color.Green
-                        else if (percentageSpent > .5 && percentageSpent < 1)
-                            Color.Yellow
-                        else
-                            Color(0xFFFF3D3D),
-
+                        color = getTextColor(category)
                         )
                     Text(
                         text = "$${"%.2f".format(category.planned - category.spent)}",
@@ -200,23 +224,57 @@ fun GroupCard(
                             .weight(remainingColumnWidth)
                             .padding(end = 5.dp),
                         textAlign = TextAlign.End,
-                        color = if (percentageSpent in 0.0.. .5)
-                            Color.Green
-                        else if (percentageSpent > .5 && percentageSpent < 1)
-                            Color.Yellow
-                        else
-                            Color(0xFFFF3D3D)
+                        color = getTextColor(category)
                     )
                     Text(
-                        text = if (category.spendingType == SpendingType.FIXED) "FXD" else "VAR",
+                        text = if (category.spendingType == SpendingType.FIXED)
+                                "FXD"
+                                else if (category.spendingType == SpendingType.RECURRING) "REC"
+                                else "VAR",
                         Modifier.weight(typeColumnWidth),
                         textAlign = TextAlign.Center
                     )
+                    if (isEditMode) {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+//                                    db.categoryDao().deleteCategoryByGroupUid(group.uid)
+                                    db.categoryDao().delete(category)
+                                }
+                            }
+                        ) {
+                            Icon(
+                                Icons.Outlined.Edit,
+                                contentDescription = "Edit Category",
+                                tint = Color.White
+                            )
+                        }
+                    }
                 }
                 HorizontalDivider(thickness = 1.dp)
 
             }
         }
 
+    }
+}
+
+fun getTextColor(category: Category): Color {
+    val percentageSpent = category.spent / category.planned
+
+    if (category.spendingType == SpendingType.FIXED) {
+        if (percentageSpent in 0.0.. .5)
+            return Color.Green
+        else if (percentageSpent > .5 && percentageSpent < 1)
+            return Color.Yellow
+        else
+            return Color.White
+    } else {
+        if (percentageSpent in 0.0.. .5)
+            return Color.Green
+        else if (percentageSpent > .5 && percentageSpent < 1)
+            return Color.Yellow
+        else
+            return Color(0xFFFF3D3D)
     }
 }

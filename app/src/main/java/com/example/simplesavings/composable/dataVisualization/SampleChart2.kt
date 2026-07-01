@@ -6,16 +6,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.draw.rotate
 import com.example.simplesavings.config.database.AppDatabase
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
-import com.patrykandpatrick.vico.compose.cartesian.data.ColumnCartesianLayerModel
 import com.patrykandpatrick.vico.compose.cartesian.data.columnModel
-import com.patrykandpatrick.vico.compose.cartesian.data.columnSeries
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.common.data.ExtraStore
@@ -62,7 +60,7 @@ fun SampleChart2(
                 ),
         ),
         modelProducer,
-        modifier = modifier,
+        modifier = modifier.rotate(-90f),
     )
 }
 

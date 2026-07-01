@@ -10,7 +10,7 @@ import java.time.Instant
 @Entity(tableName = "transactions")
 data class Transaction (
     @PrimaryKey val uid: String,
-    val categoryUid: Int, // FK to Group UID
+    var categoryUid: Int, // FK to Group UID
 
     val dateTime: Instant = Instant.now(),
 
