@@ -69,22 +69,47 @@ abstract class TransactionDao {
     @Update
     abstract suspend fun update(transaction: Transaction)
 
-    @Query(
-        "select t.uid, t.categoryUid, t.dateTime, t.debit, t.credit, t.businessName from category as c " +
-                "join transactions as t on c.uid = t.categoryUid " +
-                "where c.uid = :categoryUid"
-    )
+    @Query("""
+        SELECT t.uid, t.categoryUid, t.dateTime, t.debit, t.credit, t.businessName
+        FROM category AS c
+        JOIN transactions AS t ON c.uid = t.categoryUid
+        WHERE c.uid = :categoryUid
+    """)
     abstract fun getTransactionsForCategory(categoryUid: Int): Flow<List<Transaction>>
 
-    @Query(
-        "select COALESCE(c.name, '') as categoryName, t.uid, t.categoryUid, t.dateTime, t.debit, t.credit, COALESCE(t.businessName, '') as businessName from transactions as t " +
-                "left join category as c on c.uid = t.categoryUid order by t.dateTime desc"
-    )
-    protected abstract fun getTransactionsInternal(): Flow<List<TransactionWithCategory>>
+    @Query("""
+        SELECT
+            COALESCE(c.name, '') AS categoryName,
+            t.uid,
+            t.categoryUid,
+            t.dateTime,
+            t.debit,
+            t.credit,
+            COALESCE(t.businessName, '') AS businessName
+        FROM (SELECT * FROM transactions
+                where strftime('%Y', dateTime / 1000, 'unixepoch') = :year
+                  and CASE strftime('%m', dateTime / 1000, 'unixepoch')
+                          WHEN '01' THEN 'January'
+                          WHEN '02' THEN 'February'
+                          WHEN '03' THEN 'March'
+                          WHEN '04' THEN 'April'
+                          WHEN '05' THEN 'May'
+                          WHEN '06' THEN 'June'
+                          WHEN '07' THEN 'July'
+                          WHEN '08' THEN 'August'
+                          WHEN '09' THEN 'September'
+                          WHEN '10' THEN 'October'
+                          WHEN '11' THEN 'November'
+                          WHEN '12' THEN 'December'
+                        END = :month) AS t
+        LEFT JOIN category AS c ON c.uid = t.categoryUid
+        ORDER BY t.dateTime DESC
+    """)
+    protected abstract fun getTransactionsInternal(year: String, month: String): Flow<List<TransactionWithCategory>>
 
     // 2. The "Public" function you actually call
-    fun getTransactionsWithNames(): Flow<List<Transaction>> {
-        return getTransactionsInternal().map { list ->
+    fun getTransactionsWithNames(year: String, month: String): Flow<List<Transaction>> {
+        return getTransactionsInternal(year, month).map { list ->
             list.map { result ->
                 Transaction(
                     uid = result.uid,

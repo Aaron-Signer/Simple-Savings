@@ -68,7 +68,7 @@ fun TransactionsView (
     currentMonthString: String,
     currentYearString: String
 ) {
-    val transactionListFlow = remember(db) { db.transactionDao().getTransactionsWithNames() }
+    val transactionListFlow = remember(db) { db.transactionDao().getTransactionsWithNames(currentYearString, currentMonthString) }
     val categoryListFlow = remember(db) { db.categoryDao().getCategoriesForMonthAndYear(currentMonthString, currentYearString) }
 
     val transactionList by transactionListFlow.collectAsState(initial = emptyList())
